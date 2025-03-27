@@ -9,8 +9,9 @@ interface DisplayProps {
 }
 
 const Display: React.FC<DisplayProps> = ({ value, expression, className }) => {
-  // Check if the display value contains variables (for calculus mode)
+  // Check if the display value contains variables (for calculus mode) or chemical symbols
   const containsVariables = /[a-zA-Z]/.test(value);
+  const isChemicalEquation = /[A-Z][a-z]?\d*|\+|→|⟶|=|⇌/.test(value);
   
   return (
     <div className={cn(
@@ -24,7 +25,7 @@ const Display: React.FC<DisplayProps> = ({ value, expression, className }) => {
       </div>
       <div className={cn(
         "text-right text-3xl md:text-4xl font-light tracking-tighter overflow-x-auto whitespace-nowrap w-full animate-slide-up",
-        containsVariables && "font-mono"
+        (containsVariables || isChemicalEquation) && "font-mono"
       )}>
         {value || "0"}
       </div>

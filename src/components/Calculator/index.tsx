@@ -1,8 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
 import CalculusSteps from "./CalculusSteps";
+import ChemistrySteps from "./ChemistrySteps";
 import { 
   OPERATIONS, 
   formatNumber, 
@@ -11,8 +11,12 @@ import {
   parseExpression, 
   calculateDerivative, 
   calculateIntegral,
+  balanceChemicalEquation,
+  calculateStoichiometry,
   type CalculusResult,
-  type CalculusOperation
+  type CalculusOperation,
+  type ChemistryResult,
+  type ChemistryOperation
 } from "./CalculatorUtils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -37,6 +41,14 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [calculusOperation, setCalculusOperation] = useState<CalculusOperation | null>(null);
   const [calculusResult, setCalculusResult] = useState<CalculusResult | null>(null);
   const [variable, setVariable] = useState<'x' | 'y' | 't'>('x');
+  
+  // State for chemistry operations
+  const [chemistryMode, setChemistryMode] = useState<boolean>(false);
+  const [chemistryOperation, setChemistryOperation] = useState<ChemistryOperation | null>(null);
+  const [chemistryResult, setChemistryResult] = useState<ChemistryResult | null>(null);
+  const [knownAmount, setKnownAmount] = useState<number>(1);
+  const [knownCompound, setKnownCompound] = useState<string>('');
+  const [targetCompound, setTargetCompound] = useState<string>('');
   
   // Handle number input
   const handleNumberInput = (value: string) => {
@@ -118,41 +130,63 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Handle calculus operations (derivative, integral)
-  const handleCalculusOperation = (type: CalculusOperation) => {
+  // Handle chemistry operations (balancing equations, stoichiometry)
+  const handleChemistryOperation = (type: ChemistryOperation) => {
     try {
-      setCalculusMode(true);
-      setCalculusOperation(type);
+      setChemistryMode(true);
+      setChemistryOperation(type);
       
       // Calculate the result based on the operation type
-      let result: CalculusResult;
-      if (type === 'derivative') {
-        result = calculateDerivative(displayValue, variable);
+      let result: ChemistryResult;
+      if (type === 'balance') {
+        result = balanceChemicalEquation(displayValue);
       } else {
-        result = calculateIntegral(displayValue, variable);
+        // For stoichiometry, we need additional inputs which should be in the displayValue
+        // Format expected: "equation|knownAmount|knownCompound|targetCompound"
+        const parts = displayValue.split('|');
+        if (parts.length !== 4) {
+          throw new Error("For stoichiometry, enter: equation|amount|known|target");
+        }
+        result = calculateStoichiometry(
+          parts[0].trim(),
+          parseFloat(parts[1].trim()),
+          parts[2].trim(),
+          parts[3].trim()
+        );
       }
       
-      setCalculusResult(result);
+      setChemistryResult(result);
       
       // Update history
-      const operationSymbol = type === 'derivative' ? 'd/dx' : '∫';
-      const historyItem = `${operationSymbol}(${displayValue}) = ${result.result}`;
+      const historyItem = `${type === 'balance' ? 'Balance' : 'Stoichiometry'}: ${displayValue} = ${result.result}`;
       setHistory([historyItem, ...history].slice(0, 10));
       
     } catch (error) {
-      toast.error("Calculus error");
-      setCalculusResult(null);
+      toast.error("Chemistry error: " + (error instanceof Error ? error.message : "Unknown error"));
+      setChemistryResult(null);
     }
   };
 
-  // Toggle calculus mode
+  // Toggle calculator modes
   const toggleCalculusMode = () => {
     setCalculusMode(!calculusMode);
+    setChemistryMode(false);
     if (!calculusMode) {
       toast.info("Enter an expression in terms of x");
     } else {
       setCalculusResult(null);
       setCalculusOperation(null);
+    }
+  };
+  
+  const toggleChemistryMode = () => {
+    setChemistryMode(!chemistryMode);
+    setCalculusMode(false);
+    if (!chemistryMode) {
+      toast.info("Enter a chemical equation like 'H2 + O2 → H2O'");
+    } else {
+      setChemistryResult(null);
+      setChemistryOperation(null);
     }
   };
 
@@ -212,6 +246,8 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setIsNewInput(true);
     setCalculusResult(null);
     setCalculusOperation(null);
+    setChemistryResult(null);
+    setChemistryOperation(null);
   };
 
   // Clear only the display (CE)
@@ -264,6 +300,16 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     toast.info(`Variable set to ${variable}`);
   };
 
+  // Add chemical symbols and arrows for chemistry mode
+  const handleChemicalInput = (symbol: string) => {
+    if (isNewInput) {
+      setDisplayValue(symbol);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + symbol);
+    }
+  };
+
   // Keyboard support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -312,37 +358,66 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         />
       )}
       
+      {chemistryResult && chemistryOperation && (
+        <ChemistrySteps 
+          result={chemistryResult} 
+          operation={chemistryOperation} 
+        />
+      )}
+      
       <div className="grid grid-cols-4 gap-3 mt-4">
-        {/* Calculus Mode Toggle */}
+        {/* Mode Selection Buttons */}
+        <Button 
+          value={chemistryMode ? "Basic" : "Chemistry"} 
+          onClick={toggleChemistryMode} 
+          variant={chemistryMode ? "equal" : "function"} 
+        />
+        
         <Button 
           value={calculusMode ? "Basic" : "Calculus"} 
           onClick={toggleCalculusMode} 
           variant={calculusMode ? "equal" : "function"} 
-          wide
         />
         
-        {calculusMode ? (
-          // Variable Selection Button
-          <Button 
-            value={`Var: ${variable}`} 
-            onClick={toggleVariable} 
-            variant="function" 
-          />
-        ) : (
-          // Memory Clear in Basic Mode
-          <Button 
-            value="MC" 
-            onClick={() => handleMemory("MC")} 
-            variant="memory" 
-          />
-        )}
-        
-        {/* Common buttons in both modes */}
+        {/* Common buttons in all modes */}
         <Button value="C" onClick={clearAll} variant="function" />
         <Button value="⌫" onClick={handleBackspace} variant="function" />
 
-        {calculusMode ? (
-          // Calculus Mode Buttons
+        {chemistryMode ? (
+          // Chemistry Mode Buttons
+          <>
+            {/* Chemistry operation buttons */}
+            <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="function" wide />
+            <Button value="Stoichiometry" onClick={() => handleChemistryOperation('stoichiometry')} variant="function" wide />
+
+            {/* Chemical symbols and operators */}
+            <Button value="H" onClick={() => handleChemicalInput('H')} variant="number" />
+            <Button value="O" onClick={() => handleChemicalInput('O')} variant="number" />
+            <Button value="C" onClick={() => handleChemicalInput('C')} variant="number" />
+            <Button value="N" onClick={() => handleChemicalInput('N')} variant="number" />
+
+            <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
+            <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
+            <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
+            <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
+
+            <Button value="2" onClick={() => handleNumberInput('2')} />
+            <Button value="3" onClick={() => handleNumberInput('3')} />
+            <Button value="4" onClick={() => handleNumberInput('4')} />
+            <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
+
+            <Button value="5" onClick={() => handleNumberInput('5')} />
+            <Button value="6" onClick={() => handleNumberInput('6')} />
+            <Button value="7" onClick={() => handleNumberInput('7')} />
+            <Button value="8" onClick={() => handleNumberInput('8')} />
+
+            <Button value="9" onClick={() => handleNumberInput('9')} />
+            <Button value="0" onClick={() => handleNumberInput('0')} />
+            <Button value="1" onClick={() => handleNumberInput('1')} />
+            <Button value="." onClick={() => handleNumberInput('.')} />
+          </>
+        ) : calculusMode ? (
+          // Calculus Mode Buttons (leave existing code)
           <>
             {/* Calculus operation buttons */}
             <Button value="d/dx" onClick={() => handleCalculusOperation('derivative')} variant="function" />

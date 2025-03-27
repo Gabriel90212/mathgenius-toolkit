@@ -1,4 +1,3 @@
-
 // Constants for mathematical operations
 export const OPERATIONS = {
   ADD: '+',
@@ -96,6 +95,7 @@ export const parseExpression = (expression: string): string => {
 export type Variable = 'x' | 'y' | 't';
 export type Expression = string;
 export type CalculusOperation = 'derivative' | 'integral';
+export type ChemistryOperation = 'balance' | 'stoichiometry';
 
 // Interface for calculus result with steps
 export interface CalculusResult {
@@ -110,242 +110,367 @@ export interface CalculusStep {
   expression: Expression;
 }
 
-// Basic symbolic derivative rules
-export const calculateDerivative = (expression: Expression, variable: Variable = 'x'): CalculusResult => {
+// Chemistry related interfaces
+export interface ChemistryResult {
+  equation: string;
+  result: string;
+  steps: ChemistryStep[];
+  error?: string;
+}
+
+export interface ChemistryStep {
+  description: string;
+  expression: string;
+}
+
+export interface ChemicalElement {
+  symbol: string;
+  count: number;
+}
+
+export interface ChemicalCompound {
+  elements: ChemicalElement[];
+  coefficient: number;
+}
+
+// Parse a chemical formula into elements and their counts
+const parseChemicalFormula = (formula: string): ChemicalElement[] => {
+  const elements: ChemicalElement[] = [];
+  let i = 0;
+
+  while (i < formula.length) {
+    // Match an element symbol (uppercase letter followed by optional lowercase)
+    if (/[A-Z]/.test(formula[i])) {
+      let symbol = formula[i];
+      i++;
+      
+      // Check for lowercase part of the symbol
+      if (i < formula.length && /[a-z]/.test(formula[i])) {
+        symbol += formula[i];
+        i++;
+      }
+      
+      // Check for a number following the symbol
+      let countStr = '';
+      while (i < formula.length && /[0-9]/.test(formula[i])) {
+        countStr += formula[i];
+        i++;
+      }
+      
+      const count = countStr ? parseInt(countStr, 10) : 1;
+      elements.push({ symbol, count });
+    } else {
+      // Skip any other characters
+      i++;
+    }
+  }
+  
+  return elements;
+};
+
+// Parse a chemical equation side (left or right of the arrow)
+const parseEquationSide = (side: string): ChemicalCompound[] => {
+  const compounds: ChemicalCompound[] = [];
+  
+  // Split by + to get individual compounds
+  const compoundStrings = side.split('+').map(s => s.trim());
+  
+  for (const compoundStr of compoundStrings) {
+    // Check for coefficient
+    const coefficientMatch = compoundStr.match(/^(\d+)(.+)$/);
+    let coefficient = 1;
+    let formulaStr = compoundStr;
+    
+    if (coefficientMatch) {
+      coefficient = parseInt(coefficientMatch[1], 10);
+      formulaStr = coefficientMatch[2];
+    }
+    
+    const elements = parseChemicalFormula(formulaStr);
+    compounds.push({ elements, coefficient });
+  }
+  
+  return compounds;
+};
+
+// Parse a full chemical equation
+const parseChemicalEquation = (equation: string): { reactants: ChemicalCompound[], products: ChemicalCompound[] } => {
+  // Replace arrow variants with a standard one
+  const standardizedEquation = equation.replace(/⟶|⇌|=>/g, '→');
+  
+  // Split by the arrow
+  const sides = standardizedEquation.split('→').map(s => s.trim());
+  
+  if (sides.length !== 2) {
+    throw new Error('Invalid equation format. Use format like "H2 + O2 → H2O"');
+  }
+  
+  const reactants = parseEquationSide(sides[0]);
+  const products = parseEquationSide(sides[1]);
+  
+  return { reactants, products };
+};
+
+// Count elements on each side of the equation
+const countElements = (compounds: ChemicalCompound[]): Record<string, number> => {
+  const elementCounts: Record<string, number> = {};
+  
+  for (const compound of compounds) {
+    for (const element of compound.elements) {
+      const totalCount = element.count * compound.coefficient;
+      elementCounts[element.symbol] = (elementCounts[element.symbol] || 0) + totalCount;
+    }
+  }
+  
+  return elementCounts;
+};
+
+// Format the balanced equation
+const formatBalancedEquation = (reactants: ChemicalCompound[], products: ChemicalCompound[]): string => {
+  const formatSide = (compounds: ChemicalCompound[]): string => {
+    return compounds.map(compound => {
+      const coefficient = compound.coefficient === 1 ? '' : compound.coefficient;
+      const formula = compound.elements.map(element => {
+        return element.count === 1 ? element.symbol : `${element.symbol}${element.count}`;
+      }).join('');
+      return `${coefficient}${formula}`;
+    }).join(' + ');
+  };
+  
+  return `${formatSide(reactants)} → ${formatSide(products)}`;
+};
+
+// Balance a chemical equation using linear algebra approach (simplified)
+export const balanceChemicalEquation = (equation: string): ChemistryResult => {
   try {
-    // This is a simplified implementation - in a real app, you'd use a math library
-    const steps: CalculusStep[] = [];
+    const steps: ChemistryStep[] = [];
     let result = '';
     
-    // Try to identify the expression structure
-    const cleanedExpr = expression.replace(/\s+/g, '');
+    steps.push({
+      description: "Parse the chemical equation:",
+      expression: equation
+    });
     
-    // Handle basic polynomial terms: x^n → n*x^(n-1)
-    const powerMatch = cleanedExpr.match(new RegExp(`${variable}\\^(\\d+)`));
-    if (powerMatch) {
-      const power = parseInt(powerMatch[1], 10);
-      if (power > 0) {
-        steps.push({
-          description: `Apply the power rule: d/d${variable}(${variable}^n) = n·${variable}^(n-1)`,
-          expression: `${power}${variable}^${power - 1}`
-        });
+    // Parse the equation
+    const { reactants, products } = parseChemicalEquation(equation);
+    
+    // Count elements on both sides
+    const reactantElements = countElements(reactants);
+    const productElements = countElements(products);
+    
+    steps.push({
+      description: "Identify the elements in the reaction:",
+      expression: `Elements: ${Object.keys(reactantElements).concat(Object.keys(productElements))
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .join(', ')}`
+    });
+    
+    // Simple balancing for basic equations (this is a simplified approach)
+    // For a real implementation, you'd use a linear algebra system to solve this
+    
+    // Start with coefficients of 1
+    let balanced = false;
+    let attempts = 0;
+    const maxAttempts = 10; // Prevent infinite loops
+    
+    while (!balanced && attempts < maxAttempts) {
+      attempts++;
+      
+      // Check if equation is balanced
+      balanced = true;
+      const allElements = new Set([...Object.keys(reactantElements), ...Object.keys(productElements)]);
+      
+      for (const element of allElements) {
+        const reactantCount = reactantElements[element] || 0;
+        const productCount = productElements[element] || 0;
         
-        if (power - 1 === 0) {
+        if (reactantCount !== productCount) {
+          balanced = false;
+          break;
+        }
+      }
+      
+      if (balanced) break;
+      
+      // Try to balance by adjusting coefficients (simplified approach)
+      if (attempts === 1) {
+        // For demonstration, let's simulate a simple balance for common reactions
+        
+        // Water formation: H2 + O2 → H2O (should be 2H2 + O2 → 2H2O)
+        if (equation.match(/H2\s*\+\s*O2\s*→\s*H2O/)) {
+          reactants[0].coefficient = 2; // 2H2
+          products[0].coefficient = 2;  // 2H2O
+          
           steps.push({
-            description: `Simplify:`,
-            expression: `${power}`
+            description: "Balance hydrogen atoms:",
+            expression: "Need 2 H₂ molecules to match 2 H₂O molecules"
           });
-          result = `${power}`;
-        } else if (power - 1 === 1) {
+          
           steps.push({
-            description: `Simplify:`,
-            expression: `${power}${variable}`
+            description: "Balance oxygen atoms:",
+            expression: "O₂ has 2 oxygen atoms, which matches 2 H₂O molecules"
           });
-          result = `${power}${variable}`;
-        } else {
-          result = `${power}${variable}^${power - 1}`;
+          
+          result = "2H2 + O2 → 2H2O";
+          break;
         }
         
-        return { expression, result, steps };
+        // Methane combustion: CH4 + O2 → CO2 + H2O
+        if (equation.match(/CH4\s*\+\s*O2\s*→\s*CO2\s*\+\s*H2O/)) {
+          reactants[0].coefficient = 1; // CH4
+          reactants[1].coefficient = 2; // 2O2
+          products[0].coefficient = 1;  // CO2
+          products[1].coefficient = 2;  // 2H2O
+          
+          steps.push({
+            description: "Balance carbon atoms:",
+            expression: "1 carbon in CH₄ matches 1 carbon in CO₂"
+          });
+          
+          steps.push({
+            description: "Balance hydrogen atoms:",
+            expression: "4 hydrogen atoms in CH₄ need 2 H₂O molecules (with 4 hydrogen atoms)"
+          });
+          
+          steps.push({
+            description: "Balance oxygen atoms:",
+            expression: "2 O₂ molecules provide 4 oxygen atoms, matching CO₂ (2) + 2H₂O (2)"
+          });
+          
+          result = "CH4 + 2O2 → CO2 + 2H2O";
+          break;
+        }
+        
+        // If it's not a recognized pattern, provide a generic explanation
+        steps.push({
+          description: "Apply the law of conservation of mass:",
+          expression: "The number of atoms of each element must be equal on both sides of the equation"
+        });
+        
+        // Inform about the limitation of this simple implementation
+        result = "Unable to automatically balance this equation. Try a simpler equation like 'H2 + O2 → H2O'";
+        return {
+          equation,
+          result,
+          steps,
+          error: "Complex equation balancing requires matrix operations not implemented in this demo"
+        };
       }
     }
     
-    // Handle basic constants: c → 0
-    const constMatch = /^[0-9]+$/.test(cleanedExpr);
-    if (constMatch) {
-      steps.push({
-        description: `The derivative of a constant is zero: d/d${variable}(${cleanedExpr}) = 0`,
-        expression: '0'
-      });
-      result = '0';
-      return { expression, result, steps };
+    if (!result) {
+      result = formatBalancedEquation(reactants, products);
     }
     
-    // Handle x → 1
-    if (cleanedExpr === variable) {
-      steps.push({
-        description: `The derivative of ${variable} with respect to ${variable} is 1: d/d${variable}(${variable}) = 1`,
-        expression: '1'
-      });
-      result = '1';
-      return { expression, result, steps };
-    }
+    steps.push({
+      description: "Final balanced equation:",
+      expression: result
+    });
     
-    // Handle sin(x) → cos(x)
-    if (cleanedExpr === `sin(${variable})`) {
-      steps.push({
-        description: `Apply the derivative of sine: d/d${variable}(sin(${variable})) = cos(${variable})`,
-        expression: `cos(${variable})`
-      });
-      result = `cos(${variable})`;
-      return { expression, result, steps };
-    }
-    
-    // Handle cos(x) → -sin(x)
-    if (cleanedExpr === `cos(${variable})`) {
-      steps.push({
-        description: `Apply the derivative of cosine: d/d${variable}(cos(${variable})) = -sin(${variable})`,
-        expression: `-sin(${variable})`
-      });
-      result = `-sin(${variable})`;
-      return { expression, result, steps };
-    }
-    
-    // Handle e^x → e^x
-    if (cleanedExpr === `e^${variable}` || cleanedExpr === `exp(${variable})`) {
-      steps.push({
-        description: `Apply the derivative of exponential: d/d${variable}(e^${variable}) = e^${variable}`,
-        expression: `e^${variable}`
-      });
-      result = `e^${variable}`;
-      return { expression, result, steps };
-    }
-    
-    // Handle ln(x) → 1/x
-    if (cleanedExpr === `ln(${variable})`) {
-      steps.push({
-        description: `Apply the derivative of natural logarithm: d/d${variable}(ln(${variable})) = 1/${variable}`,
-        expression: `1/${variable}`
-      });
-      result = `1/${variable}`;
-      return { expression, result, steps };
-    }
-    
-    // If we can't handle it, return an error
-    return {
-      expression,
-      result: 'Cannot compute',
-      steps: [{
-        description: 'This expression format is not supported yet',
-        expression: expression
-      }],
-      error: 'Unsupported expression'
-    };
+    return { equation, result, steps };
   } catch (error) {
     return {
-      expression,
+      equation,
       result: 'Error',
       steps: [{
-        description: 'An error occurred while computing the derivative',
-        expression: expression
+        description: 'An error occurred while balancing the equation',
+        expression: equation
       }],
-      error: 'Computation error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 };
 
-// Basic symbolic integration
-export const calculateIntegral = (expression: Expression, variable: Variable = 'x'): CalculusResult => {
+// Calculate stoichiometry based on a balanced equation
+export const calculateStoichiometry = (equation: string, knownAmount: number, knownCompound: string, targetCompound: string): ChemistryResult => {
   try {
-    // This is a simplified implementation - in a real app, you'd use a math library
-    const steps: CalculusStep[] = [];
-    let result = '';
+    // Parse the equation first
+    const { reactants, products } = parseChemicalEquation(equation);
     
-    // Try to identify the expression structure
-    const cleanedExpr = expression.replace(/\s+/g, '');
+    // Check if the equation is balanced
+    const balanceResult = balanceChemicalEquation(equation);
     
-    // Handle constant: c → c*x
-    const constMatch = /^[0-9]+$/.test(cleanedExpr);
-    if (constMatch) {
+    const steps: ChemistryStep[] = [];
+    
+    steps.push({
+      description: "Start with the balanced equation:",
+      expression: balanceResult.result || equation
+    });
+    
+    // This is a simplified implementation that recognizes basic patterns
+    // For a real implementation, you'd get the molar mass of compounds and use proper stoichiometric calculations
+    
+    // Example: For a reaction like "2H2 + O2 → 2H2O", if we know we have 4 moles of H2, 
+    // how many moles of H2O can we produce?
+    
+    // For demonstration, let's handle some common cases
+    if (equation.match(/H2\s*\+\s*O2\s*→\s*H2O/) || equation.match(/2H2\s*\+\s*O2\s*→\s*2H2O/)) {
       steps.push({
-        description: `The integral of a constant is the constant times the variable: ∫${cleanedExpr} d${variable} = ${cleanedExpr}${variable}`,
-        expression: `${cleanedExpr}${variable} + C`
+        description: `Given: ${knownAmount} moles of ${knownCompound}`,
+        expression: `2H2 + O2 → 2H2O (balanced equation)`
       });
-      result = `${cleanedExpr}${variable} + C`;
-      return { expression, result, steps };
-    }
-    
-    // Handle x → x^2/2
-    if (cleanedExpr === variable) {
-      steps.push({
-        description: `Apply the power rule for integration: ∫${variable} d${variable} = ${variable}^2/2`,
-        expression: `${variable}^2/2 + C`
-      });
-      result = `${variable}^2/2 + C`;
-      return { expression, result, steps };
-    }
-    
-    // Handle x^n → x^(n+1)/(n+1) where n ≠ -1
-    const powerMatch = cleanedExpr.match(new RegExp(`${variable}\\^(\\d+)`));
-    if (powerMatch) {
-      const power = parseInt(powerMatch[1], 10);
-      if (power !== -1) {
+      
+      let result = '';
+      
+      if (knownCompound === 'H2' && targetCompound === 'H2O') {
+        // 2 moles of H2 produce 2 moles of H2O (1:1 ratio)
+        const targetAmount = knownAmount;
+        
         steps.push({
-          description: `Apply the power rule for integration: ∫${variable}^${power} d${variable} = ${variable}^(${power}+1)/(${power}+1)`,
-          expression: `${variable}^${power + 1}/${power + 1} + C`
+          description: "Calculate mole ratio:",
+          expression: "2 moles H₂ : 2 moles H₂O = 1:1 ratio"
         });
-        result = `${variable}^${power + 1}/${power + 1} + C`;
-        return { expression, result, steps };
-      } else {
-        // Handle x^-1 = 1/x → ln|x|
+        
         steps.push({
-          description: `Apply the logarithmic rule: ∫1/${variable} d${variable} = ln|${variable}|`,
-          expression: `ln|${variable}| + C`
+          description: "Apply the mole ratio:",
+          expression: `${knownAmount} moles H₂ × (1 mol H₂O / 1 mol H₂) = ${targetAmount} moles H₂O`
         });
-        result = `ln|${variable}| + C`;
-        return { expression, result, steps };
+        
+        result = `${targetAmount} moles of ${targetCompound}`;
+      } 
+      else if (knownCompound === 'O2' && targetCompound === 'H2O') {
+        // 1 mole of O2 produces 2 moles of H2O (1:2 ratio)
+        const targetAmount = knownAmount * 2;
+        
+        steps.push({
+          description: "Calculate mole ratio:",
+          expression: "1 mole O₂ : 2 moles H₂O = 1:2 ratio"
+        });
+        
+        steps.push({
+          description: "Apply the mole ratio:",
+          expression: `${knownAmount} moles O₂ × (2 mol H₂O / 1 mol O₂) = ${targetAmount} moles H₂O`
+        });
+        
+        result = `${targetAmount} moles of ${targetCompound}`;
       }
+      else {
+        // Handle other combinations
+        result = "Stoichiometry calculation for this specific combination is not implemented in this demo";
+      }
+      
+      return { equation, result, steps };
     }
     
-    // Handle sin(x) → -cos(x)
-    if (cleanedExpr === `sin(${variable})`) {
-      steps.push({
-        description: `Apply the integral of sine: ∫sin(${variable}) d${variable} = -cos(${variable})`,
-        expression: `-cos(${variable}) + C`
-      });
-      result = `-cos(${variable}) + C`;
-      return { expression, result, steps };
-    }
-    
-    // Handle cos(x) → sin(x)
-    if (cleanedExpr === `cos(${variable})`) {
-      steps.push({
-        description: `Apply the integral of cosine: ∫cos(${variable}) d${variable} = sin(${variable})`,
-        expression: `sin(${variable}) + C`
-      });
-      result = `sin(${variable}) + C`;
-      return { expression, result, steps };
-    }
-    
-    // Handle e^x → e^x
-    if (cleanedExpr === `e^${variable}` || cleanedExpr === `exp(${variable})`) {
-      steps.push({
-        description: `Apply the integral of exponential: ∫e^${variable} d${variable} = e^${variable}`,
-        expression: `e^${variable} + C`
-      });
-      result = `e^${variable} + C`;
-      return { expression, result, steps };
-    }
-    
-    // Handle 1/x → ln|x|
-    if (cleanedExpr === `1/${variable}`) {
-      steps.push({
-        description: `Apply the logarithmic rule: ∫1/${variable} d${variable} = ln|${variable}|`,
-        expression: `ln|${variable}| + C`
-      });
-      result = `ln|${variable}| + C`;
-      return { expression, result, steps };
-    }
-    
-    // If we can't handle it, return an error
+    // For other equations, provide a generic message
     return {
-      expression,
-      result: 'Cannot compute',
+      equation,
+      result: "For complex stoichiometry, please use a specific equation like 'H2 + O2 → H2O'",
       steps: [{
-        description: 'This expression format is not supported yet',
-        expression: expression
+        description: "Complex stoichiometry requires more advanced calculations not implemented in this demo",
+        expression: equation
       }],
-      error: 'Unsupported expression'
+      error: "Stoichiometry demo supports only simple reactions like H2 + O2 → H2O"
     };
   } catch (error) {
     return {
-      expression,
+      equation,
       result: 'Error',
       steps: [{
-        description: 'An error occurred while computing the integral',
-        expression: expression
+        description: 'An error occurred during stoichiometry calculation',
+        expression: equation
       }],
-      error: 'Computation error'
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 };
