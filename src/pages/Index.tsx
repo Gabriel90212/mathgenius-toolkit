@@ -21,7 +21,7 @@ const Index = () => {
           <p>
             Switch between <strong>Basic</strong>, <strong>Calculus</strong>, <strong>Chemistry</strong>, and <strong>Physics</strong> modes for different calculations.
             <br />
-            <strong>Chemistry Mode:</strong> Balance chemical equations and calculate stoichiometry.
+            <strong>Chemistry Mode:</strong> Balance chemical equations and calculate stoichiometry with support for all 118 elements in the periodic table.
             <br />
             <strong>Calculus Mode:</strong> Compute derivatives and integrals with variables.
             <br />
