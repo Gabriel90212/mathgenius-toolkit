@@ -40,7 +40,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [calculusMode, setCalculusMode] = useState<boolean>(false);
   const [calculusOperation, setCalculusOperation] = useState<CalculusOperation | null>(null);
   const [calculusResult, setCalculusResult] = useState<CalculusResult | null>(null);
-  const [variable, setVariable<'x' | 'y' | 't'>('x');
+  const [variable, setVariable] = useState<'x' | 'y' | 't'>('x');
   
   // State for chemistry operations
   const [chemistryMode, setChemistryMode] = useState<boolean>(false);
