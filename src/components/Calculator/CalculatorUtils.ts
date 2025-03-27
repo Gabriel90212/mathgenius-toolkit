@@ -1,3 +1,4 @@
+
 // Constants for mathematical operations
 export const OPERATIONS = {
   ADD: '+',
@@ -89,4 +90,262 @@ export const parseExpression = (expression: string): string => {
   return expression
     .replace(/\*/g, OPERATIONS.MULTIPLY)
     .replace(/\//g, OPERATIONS.DIVIDE);
+};
+
+// Types for calculus operations
+export type Variable = 'x' | 'y' | 't';
+export type Expression = string;
+export type CalculusOperation = 'derivative' | 'integral';
+
+// Interface for calculus result with steps
+export interface CalculusResult {
+  expression: Expression;
+  result: Expression;
+  steps: CalculusStep[];
+  error?: string;
+}
+
+export interface CalculusStep {
+  description: string;
+  expression: Expression;
+}
+
+// Basic symbolic derivative rules
+export const calculateDerivative = (expression: Expression, variable: Variable = 'x'): CalculusResult => {
+  try {
+    // This is a simplified implementation - in a real app, you'd use a math library
+    const steps: CalculusStep[] = [];
+    let result = '';
+    
+    // Try to identify the expression structure
+    const cleanedExpr = expression.replace(/\s+/g, '');
+    
+    // Handle basic polynomial terms: x^n → n*x^(n-1)
+    const powerMatch = cleanedExpr.match(new RegExp(`${variable}\\^(\\d+)`));
+    if (powerMatch) {
+      const power = parseInt(powerMatch[1], 10);
+      if (power > 0) {
+        steps.push({
+          description: `Apply the power rule: d/d${variable}(${variable}^n) = n·${variable}^(n-1)`,
+          expression: `${power}${variable}^${power - 1}`
+        });
+        
+        if (power - 1 === 0) {
+          steps.push({
+            description: `Simplify:`,
+            expression: `${power}`
+          });
+          result = `${power}`;
+        } else if (power - 1 === 1) {
+          steps.push({
+            description: `Simplify:`,
+            expression: `${power}${variable}`
+          });
+          result = `${power}${variable}`;
+        } else {
+          result = `${power}${variable}^${power - 1}`;
+        }
+        
+        return { expression, result, steps };
+      }
+    }
+    
+    // Handle basic constants: c → 0
+    const constMatch = /^[0-9]+$/.test(cleanedExpr);
+    if (constMatch) {
+      steps.push({
+        description: `The derivative of a constant is zero: d/d${variable}(${cleanedExpr}) = 0`,
+        expression: '0'
+      });
+      result = '0';
+      return { expression, result, steps };
+    }
+    
+    // Handle x → 1
+    if (cleanedExpr === variable) {
+      steps.push({
+        description: `The derivative of ${variable} with respect to ${variable} is 1: d/d${variable}(${variable}) = 1`,
+        expression: '1'
+      });
+      result = '1';
+      return { expression, result, steps };
+    }
+    
+    // Handle sin(x) → cos(x)
+    if (cleanedExpr === `sin(${variable})`) {
+      steps.push({
+        description: `Apply the derivative of sine: d/d${variable}(sin(${variable})) = cos(${variable})`,
+        expression: `cos(${variable})`
+      });
+      result = `cos(${variable})`;
+      return { expression, result, steps };
+    }
+    
+    // Handle cos(x) → -sin(x)
+    if (cleanedExpr === `cos(${variable})`) {
+      steps.push({
+        description: `Apply the derivative of cosine: d/d${variable}(cos(${variable})) = -sin(${variable})`,
+        expression: `-sin(${variable})`
+      });
+      result = `-sin(${variable})`;
+      return { expression, result, steps };
+    }
+    
+    // Handle e^x → e^x
+    if (cleanedExpr === `e^${variable}` || cleanedExpr === `exp(${variable})`) {
+      steps.push({
+        description: `Apply the derivative of exponential: d/d${variable}(e^${variable}) = e^${variable}`,
+        expression: `e^${variable}`
+      });
+      result = `e^${variable}`;
+      return { expression, result, steps };
+    }
+    
+    // Handle ln(x) → 1/x
+    if (cleanedExpr === `ln(${variable})`) {
+      steps.push({
+        description: `Apply the derivative of natural logarithm: d/d${variable}(ln(${variable})) = 1/${variable}`,
+        expression: `1/${variable}`
+      });
+      result = `1/${variable}`;
+      return { expression, result, steps };
+    }
+    
+    // If we can't handle it, return an error
+    return {
+      expression,
+      result: 'Cannot compute',
+      steps: [{
+        description: 'This expression format is not supported yet',
+        expression: expression
+      }],
+      error: 'Unsupported expression'
+    };
+  } catch (error) {
+    return {
+      expression,
+      result: 'Error',
+      steps: [{
+        description: 'An error occurred while computing the derivative',
+        expression: expression
+      }],
+      error: 'Computation error'
+    };
+  }
+};
+
+// Basic symbolic integration
+export const calculateIntegral = (expression: Expression, variable: Variable = 'x'): CalculusResult => {
+  try {
+    // This is a simplified implementation - in a real app, you'd use a math library
+    const steps: CalculusStep[] = [];
+    let result = '';
+    
+    // Try to identify the expression structure
+    const cleanedExpr = expression.replace(/\s+/g, '');
+    
+    // Handle constant: c → c*x
+    const constMatch = /^[0-9]+$/.test(cleanedExpr);
+    if (constMatch) {
+      steps.push({
+        description: `The integral of a constant is the constant times the variable: ∫${cleanedExpr} d${variable} = ${cleanedExpr}${variable}`,
+        expression: `${cleanedExpr}${variable} + C`
+      });
+      result = `${cleanedExpr}${variable} + C`;
+      return { expression, result, steps };
+    }
+    
+    // Handle x → x^2/2
+    if (cleanedExpr === variable) {
+      steps.push({
+        description: `Apply the power rule for integration: ∫${variable} d${variable} = ${variable}^2/2`,
+        expression: `${variable}^2/2 + C`
+      });
+      result = `${variable}^2/2 + C`;
+      return { expression, result, steps };
+    }
+    
+    // Handle x^n → x^(n+1)/(n+1) where n ≠ -1
+    const powerMatch = cleanedExpr.match(new RegExp(`${variable}\\^(\\d+)`));
+    if (powerMatch) {
+      const power = parseInt(powerMatch[1], 10);
+      if (power !== -1) {
+        steps.push({
+          description: `Apply the power rule for integration: ∫${variable}^${power} d${variable} = ${variable}^(${power}+1)/(${power}+1)`,
+          expression: `${variable}^${power + 1}/${power + 1} + C`
+        });
+        result = `${variable}^${power + 1}/${power + 1} + C`;
+        return { expression, result, steps };
+      } else {
+        // Handle x^-1 = 1/x → ln|x|
+        steps.push({
+          description: `Apply the logarithmic rule: ∫1/${variable} d${variable} = ln|${variable}|`,
+          expression: `ln|${variable}| + C`
+        });
+        result = `ln|${variable}| + C`;
+        return { expression, result, steps };
+      }
+    }
+    
+    // Handle sin(x) → -cos(x)
+    if (cleanedExpr === `sin(${variable})`) {
+      steps.push({
+        description: `Apply the integral of sine: ∫sin(${variable}) d${variable} = -cos(${variable})`,
+        expression: `-cos(${variable}) + C`
+      });
+      result = `-cos(${variable}) + C`;
+      return { expression, result, steps };
+    }
+    
+    // Handle cos(x) → sin(x)
+    if (cleanedExpr === `cos(${variable})`) {
+      steps.push({
+        description: `Apply the integral of cosine: ∫cos(${variable}) d${variable} = sin(${variable})`,
+        expression: `sin(${variable}) + C`
+      });
+      result = `sin(${variable}) + C`;
+      return { expression, result, steps };
+    }
+    
+    // Handle e^x → e^x
+    if (cleanedExpr === `e^${variable}` || cleanedExpr === `exp(${variable})`) {
+      steps.push({
+        description: `Apply the integral of exponential: ∫e^${variable} d${variable} = e^${variable}`,
+        expression: `e^${variable} + C`
+      });
+      result = `e^${variable} + C`;
+      return { expression, result, steps };
+    }
+    
+    // Handle 1/x → ln|x|
+    if (cleanedExpr === `1/${variable}`) {
+      steps.push({
+        description: `Apply the logarithmic rule: ∫1/${variable} d${variable} = ln|${variable}|`,
+        expression: `ln|${variable}| + C`
+      });
+      result = `ln|${variable}| + C`;
+      return { expression, result, steps };
+    }
+    
+    // If we can't handle it, return an error
+    return {
+      expression,
+      result: 'Cannot compute',
+      steps: [{
+        description: 'This expression format is not supported yet',
+        expression: expression
+      }],
+      error: 'Unsupported expression'
+    };
+  } catch (error) {
+    return {
+      expression,
+      result: 'Error',
+      steps: [{
+        description: 'An error occurred while computing the integral',
+        expression: expression
+      }],
+      error: 'Computation error'
+    };
+  }
 };

@@ -2,7 +2,18 @@
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
-import { OPERATIONS, formatNumber, calculate, scientificFunctions, parseExpression } from "./CalculatorUtils";
+import CalculusSteps from "./CalculusSteps";
+import { 
+  OPERATIONS, 
+  formatNumber, 
+  calculate, 
+  scientificFunctions, 
+  parseExpression, 
+  calculateDerivative, 
+  calculateIntegral,
+  type CalculusResult,
+  type CalculusOperation
+} from "./CalculatorUtils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -20,6 +31,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [memory, setMemory] = useState<number>(0);
   const [history, setHistory] = useState<string[]>([]);
   const [shiftMode, setShiftMode] = useState<boolean>(false);
+  
+  // State for calculus operations
+  const [calculusMode, setCalculusMode] = useState<boolean>(false);
+  const [calculusOperation, setCalculusOperation] = useState<CalculusOperation | null>(null);
+  const [calculusResult, setCalculusResult] = useState<CalculusResult | null>(null);
+  const [variable, setVariable] = useState<'x' | 'y' | 't'>('x');
   
   // Handle number input
   const handleNumberInput = (value: string) => {
@@ -101,6 +118,44 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
+  // Handle calculus operations (derivative, integral)
+  const handleCalculusOperation = (type: CalculusOperation) => {
+    try {
+      setCalculusMode(true);
+      setCalculusOperation(type);
+      
+      // Calculate the result based on the operation type
+      let result: CalculusResult;
+      if (type === 'derivative') {
+        result = calculateDerivative(displayValue, variable);
+      } else {
+        result = calculateIntegral(displayValue, variable);
+      }
+      
+      setCalculusResult(result);
+      
+      // Update history
+      const operationSymbol = type === 'derivative' ? 'd/dx' : '∫';
+      const historyItem = `${operationSymbol}(${displayValue}) = ${result.result}`;
+      setHistory([historyItem, ...history].slice(0, 10));
+      
+    } catch (error) {
+      toast.error("Calculus error");
+      setCalculusResult(null);
+    }
+  };
+
+  // Toggle calculus mode
+  const toggleCalculusMode = () => {
+    setCalculusMode(!calculusMode);
+    if (!calculusMode) {
+      toast.info("Enter an expression in terms of x");
+    } else {
+      setCalculusResult(null);
+      setCalculusOperation(null);
+    }
+  };
+
   // Handle shift mode (for inverse functions)
   const toggleShiftMode = () => {
     setShiftMode(!shiftMode);
@@ -155,6 +210,8 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setStoredValue(null);
     setPendingOperation(null);
     setIsNewInput(true);
+    setCalculusResult(null);
+    setCalculusOperation(null);
   };
 
   // Clear only the display (CE)
@@ -187,6 +244,26 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
+  // Add x, y, and other variable symbols for calculus mode
+  const handleVariableInput = (variable: string) => {
+    if (isNewInput) {
+      setDisplayValue(variable);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + variable);
+    }
+  };
+
+  // Toggle between variables (x, y, t)
+  const toggleVariable = () => {
+    setVariable(prev => {
+      if (prev === 'x') return 'y';
+      if (prev === 'y') return 't';
+      return 'x';
+    });
+    toast.info(`Variable set to ${variable}`);
+  };
+
   // Keyboard support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -206,12 +283,16 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         handleBackspace();
       } else if (e.key === "%") {
         handlePercentage();
+      } else if (e.key === "x" || e.key === "y" || e.key === "t") {
+        if (calculusMode) {
+          handleVariableInput(e.key);
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [displayValue, storedValue, pendingOperation, isNewInput]);
+  }, [displayValue, storedValue, pendingOperation, isNewInput, calculusMode]);
 
   return (
     <div className={cn(
@@ -224,56 +305,129 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         expression={parseExpression(expression)} 
       />
       
-      <div className="grid grid-cols-4 gap-3">
-        {/* Memory and Clear Row */}
-        <Button value="MC" onClick={() => handleMemory("MC")} variant="memory" />
-        <Button value="MR" onClick={() => handleMemory("MR")} variant="memory" />
-        <Button value="M+" onClick={() => handleMemory("M+")} variant="memory" />
-        <Button value="M-" onClick={() => handleMemory("M-")} variant="memory" />
-
-        {/* Function Row */}
-        <Button value={shiftMode ? "2ⁿᵈ" : "2ⁿᵈ"} onClick={toggleShiftMode} variant={shiftMode ? "equal" : "function"} />
-        <Button value={shiftMode ? "10ˣ" : "log"} onClick={() => handleFunction(shiftMode ? "exp" : "log")} variant="function" />
-        <Button value={shiftMode ? "eˣ" : "ln"} onClick={() => handleFunction(shiftMode ? "exp" : "ln")} variant="function" />
+      {calculusResult && calculusOperation && (
+        <CalculusSteps 
+          result={calculusResult} 
+          operation={calculusOperation} 
+        />
+      )}
+      
+      <div className="grid grid-cols-4 gap-3 mt-4">
+        {/* Calculus Mode Toggle */}
+        <Button 
+          value={calculusMode ? "Basic" : "Calculus"} 
+          onClick={toggleCalculusMode} 
+          variant={calculusMode ? "equal" : "function"} 
+          wide
+        />
+        
+        {calculusMode ? (
+          // Variable Selection Button
+          <Button 
+            value={`Var: ${variable}`} 
+            onClick={toggleVariable} 
+            variant="function" 
+          />
+        ) : (
+          // Memory Clear in Basic Mode
+          <Button 
+            value="MC" 
+            onClick={() => handleMemory("MC")} 
+            variant="memory" 
+          />
+        )}
+        
+        {/* Common buttons in both modes */}
         <Button value="C" onClick={clearAll} variant="function" />
-
-        {/* Scientific Functions Row */}
-        <Button value={shiftMode ? "asin" : "sin"} onClick={() => handleFunction(shiftMode ? "asin" : "sin")} variant="function" />
-        <Button value={shiftMode ? "acos" : "cos"} onClick={() => handleFunction(shiftMode ? "acos" : "cos")} variant="function" />
-        <Button value={shiftMode ? "atan" : "tan"} onClick={() => handleFunction(shiftMode ? "atan" : "tan")} variant="function" />
         <Button value="⌫" onClick={handleBackspace} variant="function" />
 
-        {/* Constants and Special Functions Row */}
-        <Button value="π" onClick={() => handleFunction("pi")} variant="function" />
-        <Button value="e" onClick={() => handleFunction("e")} variant="function" />
-        <Button value="x²" onClick={() => handleFunction("pow")} variant="function" />
-        <Button value="√" onClick={() => handleFunction("sqrt")} variant="function" />
+        {calculusMode ? (
+          // Calculus Mode Buttons
+          <>
+            {/* Calculus operation buttons */}
+            <Button value="d/dx" onClick={() => handleCalculusOperation('derivative')} variant="function" />
+            <Button value="∫dx" onClick={() => handleCalculusOperation('integral')} variant="function" />
+            <Button value={variable} onClick={() => handleVariableInput(variable)} variant="number" />
+            <Button value="^" onClick={() => handleVariableInput('^')} variant="operator" />
 
-        {/* Numbers and Operations */}
-        <Button value="7" onClick={handleNumberInput} />
-        <Button value="8" onClick={handleNumberInput} />
-        <Button value="9" onClick={handleNumberInput} />
-        <Button value={OPERATIONS.DIVIDE} onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+            {/* Variable symbols and common functions */}
+            <Button value="(" onClick={() => handleVariableInput('(')} variant="function" />
+            <Button value=")" onClick={() => handleVariableInput(')')} variant="function" />
+            <Button value="sin" onClick={() => handleVariableInput('sin(')} variant="function" />
+            <Button value="cos" onClick={() => handleVariableInput('cos(')} variant="function" />
 
-        <Button value="4" onClick={handleNumberInput} />
-        <Button value="5" onClick={handleNumberInput} />
-        <Button value="6" onClick={handleNumberInput} />
-        <Button value={OPERATIONS.MULTIPLY} onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+            <Button value="7" onClick={handleNumberInput} />
+            <Button value="8" onClick={handleNumberInput} />
+            <Button value="9" onClick={handleNumberInput} />
+            <Button value="+" onClick={() => handleVariableInput('+')} variant="operator" />
 
-        <Button value="1" onClick={handleNumberInput} />
-        <Button value="2" onClick={handleNumberInput} />
-        <Button value="3" onClick={handleNumberInput} />
-        <Button value={OPERATIONS.SUBTRACT} onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+            <Button value="4" onClick={handleNumberInput} />
+            <Button value="5" onClick={handleNumberInput} />
+            <Button value="6" onClick={handleNumberInput} />
+            <Button value="-" onClick={() => handleVariableInput('-')} variant="operator" />
 
-        <Button value="0" onClick={handleNumberInput} />
-        <Button value="." onClick={handleNumberInput} />
-        <Button value="%" onClick={handlePercentage} variant="operator" />
-        <Button value={OPERATIONS.ADD} onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+            <Button value="1" onClick={handleNumberInput} />
+            <Button value="2" onClick={handleNumberInput} />
+            <Button value="3" onClick={handleNumberInput} />
+            <Button value="*" onClick={() => handleVariableInput('*')} variant="operator" />
 
-        {/* Last Row */}
-        <Button value="±" onClick={handlePlusMinus} variant="function" />
-        <Button value="xʸ" onClick={() => handleOperation(OPERATIONS.POWER)} variant="function" />
-        <Button value="=" onClick={handleEquals} variant="equal" wide />
+            <Button value="0" onClick={handleNumberInput} />
+            <Button value="." onClick={handleNumberInput} />
+            <Button value="e" onClick={() => handleVariableInput('e^')} variant="function" />
+            <Button value="/" onClick={() => handleVariableInput('/')} variant="operator" />
+          </>
+        ) : (
+          // Standard Calculator Mode
+          <>
+            {/* Memory and Clear Row */}
+            <Button value="MR" onClick={() => handleMemory("MR")} variant="memory" />
+            <Button value="M+" onClick={() => handleMemory("M+")} variant="memory" />
+            <Button value="M-" onClick={() => handleMemory("M-")} variant="memory" />
+
+            {/* Function Row */}
+            <Button value={shiftMode ? "2ⁿᵈ" : "2ⁿᵈ"} onClick={toggleShiftMode} variant={shiftMode ? "equal" : "function"} />
+            <Button value={shiftMode ? "10ˣ" : "log"} onClick={() => handleFunction(shiftMode ? "exp" : "log")} variant="function" />
+            <Button value={shiftMode ? "eˣ" : "ln"} onClick={() => handleFunction(shiftMode ? "exp" : "ln")} variant="function" />
+            <Button value="MS" onClick={() => handleMemory("MS")} variant="memory" />
+
+            {/* Scientific Functions Row */}
+            <Button value={shiftMode ? "asin" : "sin"} onClick={() => handleFunction(shiftMode ? "asin" : "sin")} variant="function" />
+            <Button value={shiftMode ? "acos" : "cos"} onClick={() => handleFunction(shiftMode ? "acos" : "cos")} variant="function" />
+            <Button value={shiftMode ? "atan" : "tan"} onClick={() => handleFunction(shiftMode ? "atan" : "tan")} variant="function" />
+            <Button value="%" onClick={handlePercentage} variant="operator" />
+
+            {/* Constants and Special Functions Row */}
+            <Button value="π" onClick={() => handleFunction("pi")} variant="function" />
+            <Button value="e" onClick={() => handleFunction("e")} variant="function" />
+            <Button value="x²" onClick={() => handleFunction("pow")} variant="function" />
+            <Button value="√" onClick={() => handleFunction("sqrt")} variant="function" />
+
+            {/* Numbers and Operations */}
+            <Button value="7" onClick={handleNumberInput} />
+            <Button value="8" onClick={handleNumberInput} />
+            <Button value="9" onClick={handleNumberInput} />
+            <Button value={OPERATIONS.DIVIDE} onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+
+            <Button value="4" onClick={handleNumberInput} />
+            <Button value="5" onClick={handleNumberInput} />
+            <Button value="6" onClick={handleNumberInput} />
+            <Button value={OPERATIONS.MULTIPLY} onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+
+            <Button value="1" onClick={handleNumberInput} />
+            <Button value="2" onClick={handleNumberInput} />
+            <Button value="3" onClick={handleNumberInput} />
+            <Button value={OPERATIONS.SUBTRACT} onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+
+            <Button value="0" onClick={handleNumberInput} />
+            <Button value="." onClick={handleNumberInput} />
+            <Button value="±" onClick={handlePlusMinus} variant="function" />
+            <Button value={OPERATIONS.ADD} onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+
+            {/* Last Row */}
+            <Button value="xʸ" onClick={() => handleOperation(OPERATIONS.POWER)} variant="function" wide />
+            <Button value="=" onClick={handleEquals} variant="equal" wide />
+          </>
+        )}
       </div>
     </div>
   );
