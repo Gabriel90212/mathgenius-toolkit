@@ -474,3 +474,219 @@ export const calculateStoichiometry = (equation: string, knownAmount: number, kn
     };
   }
 };
+
+// Function to calculate the derivative of an expression
+export const calculateDerivative = (expression: string, variable: Variable = 'x'): CalculusResult => {
+  try {
+    // For educational purposes, we'll implement a simple symbolic differentiation
+    // for basic expressions. A real calculator would use a more robust math library.
+    
+    // Initialize steps array to show work
+    const steps: CalculusStep[] = [];
+    
+    // Clean and normalize the expression
+    const cleanedExpression = expression.trim();
+    
+    steps.push({
+      description: "Starting with the expression:",
+      expression: cleanedExpression
+    });
+    
+    // Handle basic polynomial terms
+    let result = '';
+    
+    // Simple implementation for demonstration purpose
+    if (cleanedExpression === variable) {
+      // d/dx(x) = 1
+      result = '1';
+      steps.push({
+        description: `Apply the power rule: d/dx(${variable}) = 1`,
+        expression: result
+      });
+    } 
+    else if (cleanedExpression.match(new RegExp(`${variable}\\^(\\d+)`))) {
+      // d/dx(x^n) = n*x^(n-1)
+      const powerMatch = cleanedExpression.match(new RegExp(`${variable}\\^(\\d+)`));
+      if (powerMatch && powerMatch[1]) {
+        const power = parseInt(powerMatch[1]);
+        const newPower = power - 1;
+        
+        if (newPower === 0) {
+          result = power.toString();
+        } else if (newPower === 1) {
+          result = `${power}${variable}`;
+        } else {
+          result = `${power}${variable}^${newPower}`;
+        }
+        
+        steps.push({
+          description: `Apply the power rule: d/dx(${variable}^${power}) = ${power} × ${variable}^${power-1}`,
+          expression: result
+        });
+      }
+    }
+    else if (cleanedExpression.startsWith(`sin(${variable})`)) {
+      // d/dx(sin(x)) = cos(x)
+      result = `cos(${variable})`;
+      steps.push({
+        description: `Apply the derivative of sine: d/dx(sin(${variable})) = cos(${variable})`,
+        expression: result
+      });
+    }
+    else if (cleanedExpression.startsWith(`cos(${variable})`)) {
+      // d/dx(cos(x)) = -sin(x)
+      result = `-sin(${variable})`;
+      steps.push({
+        description: `Apply the derivative of cosine: d/dx(cos(${variable})) = -sin(${variable})`,
+        expression: result
+      });
+    }
+    else if (cleanedExpression.startsWith(`e^${variable}`)) {
+      // d/dx(e^x) = e^x
+      result = `e^${variable}`;
+      steps.push({
+        description: `Apply the derivative of e^x: d/dx(e^${variable}) = e^${variable}`,
+        expression: result
+      });
+    }
+    else if (cleanedExpression.match(/^\d+$/)) {
+      // d/dx(constant) = 0
+      result = '0';
+      steps.push({
+        description: `Apply the constant rule: d/dx(${cleanedExpression}) = 0`,
+        expression: result
+      });
+    }
+    else {
+      // Default for unhandled expressions
+      result = `d/dx(${cleanedExpression})`;
+      steps.push({
+        description: "This expression requires more advanced calculus rules.",
+        expression: result
+      });
+    }
+    
+    return {
+      expression: cleanedExpression,
+      result,
+      steps,
+      error: result === `d/dx(${cleanedExpression})` ? 
+        "This is a simplified calculator that handles only basic derivatives." : undefined
+    };
+  } catch (error) {
+    return {
+      expression,
+      result: 'Error',
+      steps: [{
+        description: 'An error occurred while calculating the derivative',
+        expression
+      }],
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+};
+
+// Function to calculate the integral of an expression
+export const calculateIntegral = (expression: string, variable: Variable = 'x'): CalculusResult => {
+  try {
+    // For educational purposes, we'll implement a simple symbolic integration
+    // for basic expressions. A real calculator would use a more robust math library.
+    
+    // Initialize steps array to show work
+    const steps: CalculusStep[] = [];
+    
+    // Clean and normalize the expression
+    const cleanedExpression = expression.trim();
+    
+    steps.push({
+      description: "Starting with the expression:",
+      expression: cleanedExpression
+    });
+    
+    // Handle basic integrals
+    let result = '';
+    
+    // Simple implementation for demonstration purpose
+    if (cleanedExpression === variable) {
+      // ∫x dx = x^2/2 + C
+      result = `(${variable}^2)/2 + C`;
+      steps.push({
+        description: `Apply the power rule: ∫${variable} d${variable} = ${variable}^2/2 + C`,
+        expression: result
+      });
+    } 
+    else if (cleanedExpression.match(new RegExp(`${variable}\\^(\\d+)`))) {
+      // ∫x^n dx = x^(n+1)/(n+1) + C
+      const powerMatch = cleanedExpression.match(new RegExp(`${variable}\\^(\\d+)`));
+      if (powerMatch && powerMatch[1]) {
+        const power = parseInt(powerMatch[1]);
+        const newPower = power + 1;
+        
+        result = `(${variable}^${newPower})/${newPower} + C`;
+        
+        steps.push({
+          description: `Apply the power rule: ∫${variable}^${power} d${variable} = ${variable}^${power+1}/(${power+1}) + C`,
+          expression: result
+        });
+      }
+    }
+    else if (cleanedExpression.match(/^\d+$/)) {
+      // ∫constant dx = constant*x + C
+      result = `${cleanedExpression}${variable} + C`;
+      steps.push({
+        description: `Apply the constant rule: ∫${cleanedExpression} d${variable} = ${cleanedExpression}${variable} + C`,
+        expression: result
+      });
+    }
+    else if (cleanedExpression.startsWith(`sin(${variable})`)) {
+      // ∫sin(x) dx = -cos(x) + C
+      result = `-cos(${variable}) + C`;
+      steps.push({
+        description: `Apply the integral of sine: ∫sin(${variable}) d${variable} = -cos(${variable}) + C`,
+        expression: result
+      });
+    }
+    else if (cleanedExpression.startsWith(`cos(${variable})`)) {
+      // ∫cos(x) dx = sin(x) + C
+      result = `sin(${variable}) + C`;
+      steps.push({
+        description: `Apply the integral of cosine: ∫cos(${variable}) d${variable} = sin(${variable}) + C`,
+        expression: result
+      });
+    }
+    else if (cleanedExpression.startsWith(`e^${variable}`)) {
+      // ∫e^x dx = e^x + C
+      result = `e^${variable} + C`;
+      steps.push({
+        description: `Apply the integral of e^x: ∫e^${variable} d${variable} = e^${variable} + C`,
+        expression: result
+      });
+    }
+    else {
+      // Default for unhandled expressions
+      result = `∫(${cleanedExpression}) d${variable}`;
+      steps.push({
+        description: "This expression requires more advanced calculus rules.",
+        expression: result
+      });
+    }
+    
+    return {
+      expression: cleanedExpression,
+      result,
+      steps,
+      error: result === `∫(${cleanedExpression}) d${variable}` ? 
+        "This is a simplified calculator that handles only basic integrals." : undefined
+    };
+  } catch (error) {
+    return {
+      expression,
+      result: 'Error',
+      steps: [{
+        description: 'An error occurred while calculating the integral',
+        expression
+      }],
+      error: error instanceof Error ? error.message : 'Unknown error'
+    };
+  }
+};

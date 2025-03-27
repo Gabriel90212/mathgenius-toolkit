@@ -40,7 +40,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [calculusMode, setCalculusMode] = useState<boolean>(false);
   const [calculusOperation, setCalculusOperation] = useState<CalculusOperation | null>(null);
   const [calculusResult, setCalculusResult] = useState<CalculusResult | null>(null);
-  const [variable, setVariable] = useState<'x' | 'y' | 't'>('x');
+  const [variable, setVariable<'x' | 'y' | 't'>('x');
   
   // State for chemistry operations
   const [chemistryMode, setChemistryMode] = useState<boolean>(false);
@@ -127,6 +127,34 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     } catch (error) {
       toast.error("Math error");
       clearDisplay();
+    }
+  };
+
+  // Handle calculus operations (derivatives, integrals)
+  const handleCalculusOperation = (type: CalculusOperation) => {
+    try {
+      setCalculusMode(true);
+      setCalculusOperation(type);
+      
+      // Calculate the result based on the operation type
+      let result: CalculusResult;
+      if (type === 'derivative') {
+        result = calculateDerivative(displayValue, variable);
+      } else {
+        // Integral
+        result = calculateIntegral(displayValue, variable);
+      }
+      
+      setCalculusResult(result);
+      
+      // Update history
+      const operationSymbol = type === 'derivative' ? 'd/dx' : '∫';
+      const historyItem = `${operationSymbol}(${displayValue}) = ${result.result}`;
+      setHistory([historyItem, ...history].slice(0, 10));
+      
+    } catch (error) {
+      toast.error("Calculus error: " + (error instanceof Error ? error.message : "Unknown error"));
+      setCalculusResult(null);
     }
   };
 
@@ -417,7 +445,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             <Button value="." onClick={() => handleNumberInput('.')} />
           </>
         ) : calculusMode ? (
-          // Calculus Mode Buttons (leave existing code)
+          // Calculus Mode Buttons
           <>
             {/* Calculus operation buttons */}
             <Button value="d/dx" onClick={() => handleCalculusOperation('derivative')} variant="function" />
