@@ -3,6 +3,7 @@ import Button from "./Button";
 import Display from "./Display";
 import CalculusSteps from "./CalculusSteps";
 import ChemistrySteps from "./ChemistrySteps";
+import PhysicsSteps from "./PhysicsSteps";
 import { 
   OPERATIONS, 
   formatNumber, 
@@ -13,10 +14,16 @@ import {
   calculateIntegral,
   balanceChemicalEquation,
   calculateStoichiometry,
+  calculateKinematics,
+  calculateDynamics,
+  analyzeCircuit,
+  calculateLaplace,
   type CalculusResult,
   type CalculusOperation,
   type ChemistryResult,
-  type ChemistryOperation
+  type ChemistryOperation,
+  type PhysicsResult,
+  type PhysicsOperation
 } from "./CalculatorUtils";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -46,9 +53,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [chemistryMode, setChemistryMode] = useState<boolean>(false);
   const [chemistryOperation, setChemistryOperation] = useState<ChemistryOperation | null>(null);
   const [chemistryResult, setChemistryResult] = useState<ChemistryResult | null>(null);
-  const [knownAmount, setKnownAmount] = useState<number>(1);
-  const [knownCompound, setKnownCompound] = useState<string>('');
-  const [targetCompound, setTargetCompound] = useState<string>('');
+  
+  // State for physics operations
+  const [physicsMode, setPhysicsMode] = useState<boolean>(false);
+  const [physicsOperation, setPhysicsOperation] = useState<PhysicsOperation | null>(null);
+  const [physicsResult, setPhysicsResult] = useState<PhysicsResult | null>(null);
+  const [physicsSubMode, setPhysicsSubMode] = useState<'kinematics' | 'dynamics' | 'circuits' | 'laplace'>('kinematics');
   
   // Handle number input
   const handleNumberInput = (value: string) => {
@@ -194,11 +204,59 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setChemistryResult(null);
     }
   };
+  
+  // Handle physics operations
+  const handlePhysicsOperation = (type: PhysicsOperation) => {
+    try {
+      setPhysicsMode(true);
+      setPhysicsOperation(type);
+      
+      let result: PhysicsResult;
+      
+      // Calculate the result based on the physics operation type
+      if (type === 'kinematics') {
+        // Format: initialVelocity|finalVelocity|acceleration|time|distance
+        const kinematicsType = physicsSubMode === 'kinematics' ? 
+          'distance' : 'velocity'; // Default to distance calculation
+        
+        result = calculateKinematics(displayValue, kinematicsType);
+      } 
+      else if (type === 'dynamics') {
+        // Calculate forces, energy, or momentum
+        const dynamicsType = physicsSubMode === 'dynamics' ? 
+          'force' : 'energy'; // Default to force calculation
+          
+        result = calculateDynamics(displayValue, dynamicsType);
+      }
+      else if (type === 'circuits') {
+        // Analyze circuit using Kirchhoff's laws
+        result = analyzeCircuit(displayValue);
+      }
+      else if (type === 'laplace') {
+        // Calculate Laplace transform
+        result = calculateLaplace(displayValue);
+      }
+      else {
+        throw new Error("Unknown physics operation");
+      }
+      
+      setPhysicsResult(result);
+      
+      // Update history
+      const historyItem = `Physics (${type}): ${displayValue} = ${result.result}`;
+      setHistory([historyItem, ...history].slice(0, 10));
+      
+    } catch (error) {
+      toast.error("Physics error: " + (error instanceof Error ? error.message : "Unknown error"));
+      setPhysicsResult(null);
+    }
+  };
 
   // Toggle calculator modes
   const toggleCalculusMode = () => {
     setCalculusMode(!calculusMode);
     setChemistryMode(false);
+    setPhysicsMode(false);
     if (!calculusMode) {
       toast.info("Enter an expression in terms of x");
     } else {
@@ -210,12 +268,39 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const toggleChemistryMode = () => {
     setChemistryMode(!chemistryMode);
     setCalculusMode(false);
+    setPhysicsMode(false);
     if (!chemistryMode) {
       toast.info("Enter a chemical equation like 'H2 + O2 → H2O'");
     } else {
       setChemistryResult(null);
       setChemistryOperation(null);
     }
+  };
+  
+  const togglePhysicsMode = () => {
+    setPhysicsMode(!physicsMode);
+    setCalculusMode(false);
+    setChemistryMode(false);
+    if (!physicsMode) {
+      toast.info("Enter physics parameters separated by | symbol");
+    } else {
+      setPhysicsResult(null);
+      setPhysicsOperation(null);
+    }
+  };
+  
+  // Toggle physics sub-modes
+  const togglePhysicsSubMode = () => {
+    setPhysicsSubMode(prev => {
+      if (prev === 'kinematics') return 'dynamics';
+      if (prev === 'dynamics') return 'circuits';
+      if (prev === 'circuits') return 'laplace';
+      return 'kinematics';
+    });
+    
+    toast.info(`Physics mode set to ${physicsSubMode}`);
+    setPhysicsResult(null);
+    setPhysicsOperation(null);
   };
 
   // Handle shift mode (for inverse functions)
@@ -276,6 +361,8 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setCalculusOperation(null);
     setChemistryResult(null);
     setChemistryOperation(null);
+    setPhysicsResult(null);
+    setPhysicsOperation(null);
   };
 
   // Clear only the display (CE)
@@ -330,6 +417,16 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
 
   // Add chemical symbols and arrows for chemistry mode
   const handleChemicalInput = (symbol: string) => {
+    if (isNewInput) {
+      setDisplayValue(symbol);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + symbol);
+    }
+  };
+  
+  // Add physics units and symbols for physics mode
+  const handlePhysicsInput = (symbol: string) => {
     if (isNewInput) {
       setDisplayValue(symbol);
       setIsNewInput(false);
@@ -393,6 +490,13 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         />
       )}
       
+      {physicsResult && physicsOperation && (
+        <PhysicsSteps 
+          result={physicsResult} 
+          operation={physicsOperation} 
+        />
+      )}
+      
       <div className="grid grid-cols-4 gap-3 mt-4">
         {/* Mode Selection Buttons */}
         <Button 
@@ -407,11 +511,118 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
           variant={calculusMode ? "equal" : "function"} 
         />
         
+        <Button 
+          value={physicsMode ? "Basic" : "Physics"} 
+          onClick={togglePhysicsMode} 
+          variant={physicsMode ? "equal" : "function"} 
+        />
+        
         {/* Common buttons in all modes */}
         <Button value="C" onClick={clearAll} variant="function" />
-        <Button value="⌫" onClick={handleBackspace} variant="function" />
+        
+        {physicsMode ? (
+          // Physics Mode Buttons
+          <>
+            <Button value="⌫" onClick={handleBackspace} variant="function" />
+            <Button 
+              value={physicsSubMode === 'kinematics' ? "Kinematics" : 
+                     physicsSubMode === 'dynamics' ? "Dynamics" : 
+                     physicsSubMode === 'circuits' ? "Circuits" : "Laplace"} 
+              onClick={togglePhysicsSubMode} 
+              variant="function" 
+              wide 
+            />
+            <Button value="|" onClick={() => handlePhysicsInput('|')} variant="operator" />
 
-        {chemistryMode ? (
+            {physicsSubMode === 'kinematics' ? (
+              // Kinematics Mode Buttons
+              <>
+                <Button value="Distance" onClick={() => handlePhysicsOperation('kinematics')} variant="function" />
+                <Button value="Velocity" onClick={() => handlePhysicsOperation('kinematics')} variant="function" />
+                <Button value="Accel." onClick={() => handlePhysicsOperation('kinematics')} variant="function" />
+                <Button value="Time" onClick={() => handlePhysicsOperation('kinematics')} variant="function" />
+
+                <Button value="u" onClick={() => handlePhysicsInput('u')} variant="number" />
+                <Button value="v" onClick={() => handlePhysicsInput('v')} variant="number" />
+                <Button value="a" onClick={() => handlePhysicsInput('a')} variant="number" />
+                <Button value="t" onClick={() => handlePhysicsInput('t')} variant="number" />
+
+                <Button value="s" onClick={() => handlePhysicsInput('s')} variant="number" />
+                <Button value="x" onClick={() => handlePhysicsInput('x')} variant="number" />
+              </>
+            ) : physicsSubMode === 'dynamics' ? (
+              // Dynamics Mode Buttons
+              <>
+                <Button value="Force" onClick={() => handlePhysicsOperation('dynamics')} variant="function" />
+                <Button value="Energy" onClick={() => handlePhysicsOperation('dynamics')} variant="function" />
+                <Button value="Momentum" onClick={() => handlePhysicsOperation('dynamics')} variant="function" />
+                <Button value="Mass" onClick={() => handlePhysicsInput('mass')} variant="number" />
+
+                <Button value="KE" onClick={() => handlePhysicsInput('kinetic')} variant="number" />
+                <Button value="PE" onClick={() => handlePhysicsInput('potential')} variant="number" />
+                <Button value="ME" onClick={() => handlePhysicsInput('mechanical')} variant="number" />
+                <Button value="g" onClick={() => handlePhysicsInput('9.8')} variant="number" />
+              </>
+            ) : physicsSubMode === 'circuits' ? (
+              // Circuits Mode Buttons
+              <>
+                <Button value="Ohm's Law" onClick={() => handlePhysicsOperation('circuits')} variant="function" />
+                <Button value="Series" onClick={() => handlePhysicsOperation('circuits')} variant="function" />
+                <Button value="Parallel" onClick={() => handlePhysicsOperation('circuits')} variant="function" />
+                <Button value="Kirchhoff" onClick={() => handlePhysicsOperation('circuits')} variant="function" />
+
+                <Button value="V" onClick={() => handlePhysicsInput('V')} variant="number" />
+                <Button value="I" onClick={() => handlePhysicsInput('I')} variant="number" />
+                <Button value="R" onClick={() => handlePhysicsInput('R')} variant="number" />
+                <Button value="ohm" onClick={() => handlePhysicsInput('ohm')} variant="number" />
+
+                <Button value="series" onClick={() => handlePhysicsInput('series')} variant="number" />
+                <Button value="parallel" onClick={() => handlePhysicsInput('parallel')} variant="number" />
+                <Button value="k-loop" onClick={() => handlePhysicsInput('kirchhoff-loop')} variant="number" />
+                <Button value="k-node" onClick={() => handlePhysicsInput('kirchhoff-node')} variant="number" />
+              </>
+            ) : (
+              // Laplace Mode Buttons
+              <>
+                <Button value="Forward" onClick={() => handlePhysicsOperation('laplace')} variant="function" />
+                <Button value="Inverse" onClick={() => handlePhysicsOperation('laplace')} variant="function" />
+                <Button value="Circuit" onClick={() => handlePhysicsOperation('laplace')} variant="function" />
+                <Button value="s" onClick={() => handlePhysicsInput('s')} variant="number" />
+
+                <Button value="forward" onClick={() => handlePhysicsInput('forward')} variant="number" />
+                <Button value="inverse" onClick={() => handlePhysicsInput('inverse')} variant="number" />
+                <Button value="circuit" onClick={() => handlePhysicsInput('circuit')} variant="number" />
+                <Button value="rc" onClick={() => handlePhysicsInput('rc')} variant="number" />
+
+                <Button value="rl" onClick={() => handlePhysicsInput('rl')} variant="number" />
+                <Button value="rlc" onClick={() => handlePhysicsInput('rlc')} variant="number" />
+                <Button value="e^" onClick={() => handlePhysicsInput('e^')} variant="number" />
+                <Button value="sin(" onClick={() => handlePhysicsInput('sin(')} variant="number" />
+              </>
+            )}
+
+            {/* Common physics buttons for all sub-modes */}
+            <Button value="7" onClick={() => handleNumberInput('7')} />
+            <Button value="8" onClick={() => handleNumberInput('8')} />
+            <Button value="9" onClick={() => handleNumberInput('9')} />
+            <Button value="/" onClick={() => handlePhysicsInput('/')} variant="operator" />
+
+            <Button value="4" onClick={() => handleNumberInput('4')} />
+            <Button value="5" onClick={() => handleNumberInput('5')} />
+            <Button value="6" onClick={() => handleNumberInput('6')} variant="operator" />
+            <Button value="*" onClick={() => handlePhysicsInput('*')} variant="operator" />
+
+            <Button value="1" onClick={() => handleNumberInput('1')} />
+            <Button value="2" onClick={() => handleNumberInput('2')} />
+            <Button value="3" onClick={() => handlePhysicsInput('-')} variant="operator" />
+            <Button value="-" onClick={() => handlePhysicsInput('-')} variant="operator" />
+
+            <Button value="0" onClick={() => handleNumberInput('0')} />
+            <Button value="." onClick={() => handleNumberInput('.')} />
+            <Button value="(" onClick={() => handlePhysicsInput('(')} variant="function" />
+            <Button value=")" onClick={() => handlePhysicsInput(')')} variant="function" />
+          </>
+        ) : chemistryMode ? (
           // Chemistry Mode Buttons
           <>
             {/* Chemistry operation buttons */}
