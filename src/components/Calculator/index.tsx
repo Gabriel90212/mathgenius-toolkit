@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -18,6 +19,7 @@ import {
   calculateDynamics,
   analyzeCircuit,
   calculateLaplace,
+  getAllElementSymbols,
   type CalculusResult,
   type CalculusOperation,
   type ChemistryResult,
@@ -465,10 +467,29 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [displayValue, storedValue, pendingOperation, isNewInput, calculusMode]);
 
+  // Get common element symbols for chemistry mode
+  const getCommonElements = () => {
+    return ['H', 'O', 'C', 'N', 'Cl', 'Na', 'K', 'Ca', 'Mg', 'Fe', 'S', 'P'];
+  };
+
+  // For displaying element groups in chemistry mode
+  const elementGroups = [
+    ['H', 'Li', 'Na', 'K', 'Rb', 'Cs', 'Fr'],
+    ['Be', 'Mg', 'Ca', 'Sr', 'Ba', 'Ra'],
+    ['B', 'Al', 'Ga', 'In', 'Tl'],
+    ['C', 'Si', 'Ge', 'Sn', 'Pb'],
+    ['N', 'P', 'As', 'Sb', 'Bi'],
+    ['O', 'S', 'Se', 'Te', 'Po'],
+    ['F', 'Cl', 'Br', 'I', 'At'],
+    ['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'],
+    ['Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ag', 'Au']
+  ];
+
   return (
     <div className={cn(
       "p-6 rounded-3xl glass-morphism calc-shadow",
-      "w-full max-w-md mx-auto animate-fade-in transition-all",
+      chemistryMode ? "w-full max-w-4xl" : "w-full max-w-md", 
+      "mx-auto animate-fade-in transition-all",
       className
     )}>
       <Display 
@@ -497,7 +518,10 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         />
       )}
       
-      <div className="grid grid-cols-4 gap-3 mt-4">
+      <div className={cn(
+        "grid gap-3 mt-4",
+        chemistryMode ? "grid-cols-8" : "grid-cols-4"
+      )}>
         {/* Mode Selection Buttons */}
         <Button 
           value={chemistryMode ? "Basic" : "Chemistry"} 
@@ -623,36 +647,38 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             <Button value=")" onClick={() => handlePhysicsInput(')')} variant="function" />
           </>
         ) : chemistryMode ? (
-          // Chemistry Mode Buttons
+          // Chemistry Mode Buttons - Expanded version
           <>
             {/* Chemistry operation buttons */}
-            <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="function" wide />
-            <Button value="Stoichiometry" onClick={() => handleChemistryOperation('stoichiometry')} variant="function" wide />
-
-            {/* Chemical symbols and operators */}
-            <Button value="H" onClick={() => handleChemicalInput('H')} variant="number" />
-            <Button value="O" onClick={() => handleChemicalInput('O')} variant="number" />
-            <Button value="C" onClick={() => handleChemicalInput('C')} variant="number" />
-            <Button value="N" onClick={() => handleChemicalInput('N')} variant="number" />
-
+            <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="function" className={chemistryMode ? "" : "col-span-2"} />
+            <Button value="Stoichiometry" onClick={() => handleChemistryOperation('stoichiometry')} variant="function" className={chemistryMode ? "" : "col-span-2"} />
+            <Button value="⌫" onClick={handleBackspace} variant="function" />
             <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
             <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
-            <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
-            <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
-
-            <Button value="2" onClick={() => handleNumberInput('2')} />
-            <Button value="3" onClick={() => handleNumberInput('3')} />
-            <Button value="4" onClick={() => handleNumberInput('4')} />
             <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
 
-            <Button value="5" onClick={() => handleNumberInput('5')} />
-            <Button value="6" onClick={() => handleNumberInput('6')} />
-            <Button value="7" onClick={() => handleNumberInput('7')} />
-            <Button value="8" onClick={() => handleNumberInput('8')} />
+            {/* Chemical elements - Display in a grid */}
+            {elementGroups.flat().map((element, index) => (
+              <Button 
+                key={index} 
+                value={element} 
+                onClick={() => handleChemicalInput(element)} 
+                variant="number"
+              />
+            ))}
 
-            <Button value="9" onClick={() => handleNumberInput('9')} />
-            <Button value="0" onClick={() => handleNumberInput('0')} />
-            <Button value="1" onClick={() => handleNumberInput('1')} />
+            {/* Numbers for coefficients and subscripts */}
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
+              <Button 
+                key={num} 
+                value={num.toString()} 
+                onClick={() => handleNumberInput(num.toString())} 
+              />
+            ))}
+
+            {/* Parentheses and other symbols */}
+            <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
+            <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
             <Button value="." onClick={() => handleNumberInput('.')} />
           </>
         ) : calculusMode ? (

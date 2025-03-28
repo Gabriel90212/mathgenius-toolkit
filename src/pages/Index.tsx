@@ -15,7 +15,7 @@ const Index = () => {
           </p>
         </div>
         
-        <Calculator className="w-full max-w-md" />
+        <Calculator className="w-full" />
         
         <div className="mt-10 text-center text-sm text-muted-foreground animate-fade-in">
           <p>
