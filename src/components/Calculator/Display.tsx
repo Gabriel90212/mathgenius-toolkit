@@ -9,25 +9,29 @@ interface DisplayProps {
 }
 
 const Display: React.FC<DisplayProps> = ({ value, expression, className }) => {
-  // Check if the display value contains variables (for calculus mode) or chemical symbols
-  const containsVariables = /[a-zA-Z]/.test(value);
-  const isChemicalEquation = /[A-Z][a-z]?\d*|\+|→|⟶|=|⇌/.test(value);
-  
+  // Function to format chemical formulas with proper subscripts for display
+  const formatChemicalFormula = (text: string): React.ReactNode => {
+    // This regex matches element symbols and their subscripts
+    const parts = text.split(/([A-Z][a-z]?)(\d*)/g).filter(Boolean);
+    
+    return parts.map((part, index) => {
+      // If the part is a number and follows an element symbol
+      if (/^\d+$/.test(part) && index > 0 && /^[A-Z][a-z]?$/.test(parts[index - 1])) {
+        return <sub key={index}>{part}</sub>;
+      }
+      return part;
+    });
+  };
+
   return (
-    <div className={cn(
-      "bg-calculator-display rounded-2xl p-4 mb-4 display-glass",
-      "flex flex-col items-end justify-end",
-      "min-h-[100px] overflow-hidden",
-      className
-    )}>
-      <div className="text-muted-foreground text-right mb-1 h-6 overflow-x-auto whitespace-nowrap text-sm">
-        {expression}
-      </div>
-      <div className={cn(
-        "text-right text-3xl md:text-4xl font-light tracking-tighter overflow-x-auto whitespace-nowrap w-full animate-slide-up",
-        (containsVariables || isChemicalEquation) && "font-mono"
-      )}>
-        {value || "0"}
+    <div className={cn("bg-background rounded-lg p-4 text-right", className)}>
+      {expression && (
+        <div className="text-sm text-muted-foreground overflow-x-auto whitespace-nowrap mb-1">
+          {expression}
+        </div>
+      )}
+      <div className="text-3xl font-light overflow-x-auto overflow-y-hidden whitespace-nowrap">
+        {formatChemicalFormula(value)}
       </div>
     </div>
   );

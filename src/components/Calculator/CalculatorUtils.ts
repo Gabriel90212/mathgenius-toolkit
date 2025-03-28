@@ -306,17 +306,32 @@ const parseChemicalFormula = (formula: string): ChemicalElement[] => {
         throw new Error(`Unknown element symbol: ${symbol}`);
       }
       
-      // Check for a number following the symbol
+      // Check for a number or a subscript following the symbol
       let countStr = '';
-      while (i < formula.length && /[0-9]/.test(formula[i])) {
-        countStr += formula[i];
+      
+      // Handle both regular numbers and subscript Unicode characters
+      while (i < formula.length && 
+             (/[0-9]/.test(formula[i]) || 
+              /[\u2080-\u2089]/.test(formula[i]))) {
+        
+        // Convert subscript Unicode characters to regular digits if needed
+        if (/[\u2080-\u2089]/.test(formula[i])) {
+          // Convert subscript to regular digit (₀-₉ to 0-9)
+          const subscriptToDigit: Record<string, string> = {
+            '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
+            '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9'
+          };
+          countStr += subscriptToDigit[formula[i]] || '';
+        } else {
+          countStr += formula[i];
+        }
         i++;
       }
       
       const count = countStr ? parseInt(countStr, 10) : 1;
       elements.push({ symbol, count });
     } else {
-      // Skip any other characters
+      // Skip any other characters (like charges, etc.)
       i++;
     }
   }
@@ -1388,4 +1403,27 @@ export const calculateLaplace = (input: string): PhysicsResult => {
       error: error instanceof Error ? error.message : "Unknown error"
     };
   }
+};
+
+// Helper function to convert normal numbers to subscript characters for display
+export const toSubscript = (num: number | string): string => {
+  const numStr = num.toString();
+  const subscripts = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+  
+  return numStr.split('').map(digit => {
+    const index = parseInt(digit, 10);
+    return isNaN(index) ? digit : subscripts[index];
+  }).join('');
+};
+
+// Helper function to convert normal numbers to superscript characters for display
+export const toSuperscript = (num: number | string): string => {
+  const numStr = num.toString();
+  const superscripts: Record<string, string> = {
+    '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+    '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+    '+': '⁺', '-': '⁻'
+  };
+  
+  return numStr.split('').map(char => superscripts[char] || char).join('');
 };

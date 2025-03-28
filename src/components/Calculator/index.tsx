@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -417,13 +416,50 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     toast.info(`Variable set to ${variable}`);
   };
 
-  // Add chemical symbols and arrows for chemistry mode
+  // Handle chemical symbols and arrows for chemistry mode
   const handleChemicalInput = (symbol: string) => {
     if (isNewInput) {
       setDisplayValue(symbol);
       setIsNewInput(false);
     } else {
       setDisplayValue(displayValue + symbol);
+    }
+  };
+  
+  // New function to handle subscripts (exponents) for chemical formulas
+  const handleSubscriptInput = (num: number) => {
+    if (isNewInput) {
+      setDisplayValue(num.toString());
+      setIsNewInput(false);
+    } else {
+      // Convert the number to a subscript character
+      const subscripts = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+      setDisplayValue(displayValue + subscripts[num]);
+    }
+  };
+  
+  // New function to handle superscripts (for charges, etc.)
+  const handleSuperscriptInput = (symbol: string) => {
+    if (isNewInput) {
+      setDisplayValue(symbol);
+      setIsNewInput(false);
+    } else {
+      // Map of superscript characters
+      const superscriptMap: Record<string, string> = {
+        '+': '⁺',
+        '-': '⁻',
+        '1': '¹',
+        '2': '²',
+        '3': '³',
+        '4': '⁴',
+        '5': '⁵',
+        '6': '⁶',
+        '7': '⁷',
+        '8': '⁸',
+        '9': '⁹',
+        '0': '⁰'
+      };
+      setDisplayValue(displayValue + (superscriptMap[symbol] || symbol));
     }
   };
   
@@ -488,7 +524,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   return (
     <div className={cn(
       "p-6 rounded-3xl glass-morphism calc-shadow",
-      chemistryMode ? "w-full max-w-4xl" : "w-full max-w-md", 
+      chemistryMode ? "w-full max-w-5xl" : "w-full max-w-md", 
       "mx-auto animate-fade-in transition-all",
       className
     )}>
@@ -520,7 +556,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       
       <div className={cn(
         "grid gap-3 mt-4",
-        chemistryMode ? "grid-cols-8" : "grid-cols-4"
+        chemistryMode ? "grid-cols-10" : "grid-cols-4"
       )}>
         {/* Mode Selection Buttons */}
         <Button 
@@ -650,12 +686,24 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
           // Chemistry Mode Buttons - Expanded version
           <>
             {/* Chemistry operation buttons */}
-            <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="function" className={chemistryMode ? "" : "col-span-2"} />
-            <Button value="Stoichiometry" onClick={() => handleChemistryOperation('stoichiometry')} variant="function" className={chemistryMode ? "" : "col-span-2"} />
+            <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="function" />
+            <Button value="Stoichiometry" onClick={() => handleChemistryOperation('stoichiometry')} variant="function" />
             <Button value="⌫" onClick={handleBackspace} variant="function" />
             <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
             <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
             <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
+            
+            {/* New exponent and subscription buttons */}
+            <Button value="₁" onClick={() => handleSubscriptInput(1)} variant="function" />
+            <Button value="₂" onClick={() => handleSubscriptInput(2)} variant="function" />
+            <Button value="₃" onClick={() => handleSubscriptInput(3)} variant="function" />
+            <Button value="₄" onClick={() => handleSubscriptInput(4)} variant="function" />
+
+            {/* Charge indicators (superscripts) */}
+            <Button value="⁺" onClick={() => handleSuperscriptInput('+')} variant="function" />
+            <Button value="⁻" onClick={() => handleSuperscriptInput('-')} variant="function" />
+            <Button value="²⁺" onClick={() => { handleSubscriptInput(2); handleSuperscriptInput('+'); }} variant="function" />
+            <Button value="³⁺" onClick={() => { handleSubscriptInput(3); handleSuperscriptInput('+'); }} variant="function" />
 
             {/* Chemical elements - Display in a grid */}
             {elementGroups.flat().map((element, index) => (
@@ -748,29 +796,4 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             <Button value="9" onClick={handleNumberInput} />
             <Button value={OPERATIONS.DIVIDE} onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
 
-            <Button value="4" onClick={handleNumberInput} />
-            <Button value="5" onClick={handleNumberInput} />
-            <Button value="6" onClick={handleNumberInput} />
-            <Button value={OPERATIONS.MULTIPLY} onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
-
-            <Button value="1" onClick={handleNumberInput} />
-            <Button value="2" onClick={handleNumberInput} />
-            <Button value="3" onClick={handleNumberInput} />
-            <Button value={OPERATIONS.SUBTRACT} onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
-
-            <Button value="0" onClick={handleNumberInput} />
-            <Button value="." onClick={handleNumberInput} />
-            <Button value="±" onClick={handlePlusMinus} variant="function" />
-            <Button value={OPERATIONS.ADD} onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
-
-            {/* Last Row */}
-            <Button value="xʸ" onClick={() => handleOperation(OPERATIONS.POWER)} variant="function" wide />
-            <Button value="=" onClick={handleEquals} variant="equal" wide />
-          </>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default Calculator;
+            <Button value="4"
