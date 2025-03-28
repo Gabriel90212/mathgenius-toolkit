@@ -593,4 +593,773 @@ export const balanceChemicalEquation = (equation: string): ChemistryResult => {
     }
     
     steps.push({
-      description: "
+      description: "Final balanced equation:",
+      expression: result
+    });
+    
+    return {
+      equation,
+      result,
+      steps,
+      error: balanced ? undefined : "Could not fully balance the equation with the simple algorithm."
+    };
+  } catch (error) {
+    console.error("Error balancing equation:", error);
+    return {
+      equation,
+      result: "Error",
+      steps: [{
+        description: "Error occurred:",
+        expression: error instanceof Error ? error.message : "Unknown error"
+      }],
+      error: "Failed to balance the equation. Please check the format and try again."
+    };
+  }
+};
+
+// Physics-related types and interfaces
+export type PhysicsOperation = 'kinematics' | 'dynamics' | 'circuits' | 'laplace';
+
+export interface PhysicsStep {
+  description: string;
+  expression: string;
+  value?: string | number;
+}
+
+export interface PhysicsResult {
+  result: string | number;
+  steps: PhysicsStep[];
+  error?: string;
+}
+
+// These functions will be implemented with actual physics calculations
+export const solveKinematics = (params: Record<string, number>): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    let result: number | string = 0;
+    
+    // Check which kinematics equation to use based on available parameters
+    if (params.initialVelocity !== undefined && 
+        params.acceleration !== undefined && 
+        params.time !== undefined) {
+      
+      const v0 = params.initialVelocity;
+      const a = params.acceleration;
+      const t = params.time;
+      
+      steps.push({
+        description: "Use the equation for final velocity with constant acceleration:",
+        expression: "v = v₀ + a·t"
+      });
+      
+      const finalVelocity = v0 + a * t;
+      
+      steps.push({
+        description: "Substitute the values:",
+        expression: `v = ${v0} + ${a} · ${t}`,
+        value: finalVelocity.toFixed(2)
+      });
+      
+      result = finalVelocity;
+      
+      // Calculate displacement if needed
+      if (params.displacement === undefined) {
+        steps.push({
+          description: "Calculate displacement using average velocity:",
+          expression: "s = v₀·t + ½·a·t²"
+        });
+        
+        const displacement = v0 * t + 0.5 * a * Math.pow(t, 2);
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `s = ${v0} · ${t} + 0.5 · ${a} · ${t}²`,
+          value: displacement.toFixed(2)
+        });
+      }
+    } 
+    else if (params.finalVelocity !== undefined && 
+             params.initialVelocity !== undefined && 
+             params.time !== undefined) {
+      
+      const v = params.finalVelocity;
+      const v0 = params.initialVelocity;
+      const t = params.time;
+      
+      steps.push({
+        description: "Calculate acceleration:",
+        expression: "a = (v - v₀) / t"
+      });
+      
+      const acceleration = (v - v0) / t;
+      
+      steps.push({
+        description: "Substitute the values:",
+        expression: `a = (${v} - ${v0}) / ${t}`,
+        value: acceleration.toFixed(2)
+      });
+      
+      // Calculate displacement
+      steps.push({
+        description: "Calculate displacement using average velocity:",
+        expression: "s = ½·(v₀ + v)·t"
+      });
+      
+      const displacement = 0.5 * (v0 + v) * t;
+      
+      steps.push({
+        description: "Substitute the values:",
+        expression: `s = 0.5 · (${v0} + ${v}) · ${t}`,
+        value: displacement.toFixed(2)
+      });
+      
+      result = displacement;
+    }
+    else if (params.displacement !== undefined && 
+             params.initialVelocity !== undefined && 
+             params.finalVelocity !== undefined) {
+      
+      const s = params.displacement;
+      const v0 = params.initialVelocity;
+      const v = params.finalVelocity;
+      
+      steps.push({
+        description: "Use the equation that relates velocity and displacement:",
+        expression: "v² = v₀² + 2·a·s"
+      });
+      
+      steps.push({
+        description: "Rearrange to find acceleration:",
+        expression: "a = (v² - v₀²) / (2·s)"
+      });
+      
+      const acceleration = (Math.pow(v, 2) - Math.pow(v0, 2)) / (2 * s);
+      
+      steps.push({
+        description: "Substitute the values:",
+        expression: `a = (${v}² - ${v0}²) / (2 · ${s})`,
+        value: acceleration.toFixed(2)
+      });
+      
+      result = acceleration;
+    }
+    else {
+      return {
+        result: "Insufficient parameters",
+        steps: [{
+          description: "Error:",
+          expression: "Not enough parameters to solve the kinematics problem"
+        }],
+        error: "Please provide at least 3 related parameters (e.g., initial velocity, acceleration, and time)."
+      };
+    }
+    
+    return {
+      result: typeof result === 'number' ? parseFloat(result.toFixed(4)) : result,
+      steps
+    };
+  } catch (error) {
+    console.error("Kinematics calculation error:", error);
+    return {
+      result: "Error",
+      steps: [{
+        description: "Error occurred:",
+        expression: error instanceof Error ? error.message : "Unknown error"
+      }],
+      error: "Failed to solve the kinematics problem. Please check your inputs."
+    };
+  }
+};
+
+export const solveDynamics = (params: Record<string, number>): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    let result: number | string = 0;
+    
+    // Check which dynamics equation to use based on available parameters
+    if (params.mass !== undefined && params.force !== undefined) {
+      // Newton's Second Law: F = ma
+      const m = params.mass;
+      const F = params.force;
+      
+      steps.push({
+        description: "Use Newton's Second Law:",
+        expression: "F = m·a"
+      });
+      
+      steps.push({
+        description: "Rearrange to find acceleration:",
+        expression: "a = F / m"
+      });
+      
+      const acceleration = F / m;
+      
+      steps.push({
+        description: "Substitute the values:",
+        expression: `a = ${F} / ${m}`,
+        value: acceleration.toFixed(2) + " m/s²"
+      });
+      
+      result = acceleration;
+      
+      // If we have time, we can calculate displacement
+      if (params.time !== undefined) {
+        const t = params.time;
+        
+        steps.push({
+          description: "Calculate displacement with constant acceleration:",
+          expression: "s = ½·a·t²"
+        });
+        
+        const displacement = 0.5 * acceleration * Math.pow(t, 2);
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `s = 0.5 · ${acceleration.toFixed(2)} · ${t}²`,
+          value: displacement.toFixed(2) + " m"
+        });
+        
+        result = displacement;
+      }
+    } 
+    else if (params.mass !== undefined && params.acceleration !== undefined) {
+      // Newton's Second Law: F = ma
+      const m = params.mass;
+      const a = params.acceleration;
+      
+      steps.push({
+        description: "Use Newton's Second Law:",
+        expression: "F = m·a"
+      });
+      
+      const force = m * a;
+      
+      steps.push({
+        description: "Substitute the values:",
+        expression: `F = ${m} · ${a}`,
+        value: force.toFixed(2) + " N"
+      });
+      
+      result = force;
+    }
+    else if (params.mass !== undefined && params.gravity !== undefined) {
+      // Weight calculation: W = mg
+      const m = params.mass;
+      const g = params.gravity;
+      
+      steps.push({
+        description: "Calculate weight:",
+        expression: "W = m·g"
+      });
+      
+      const weight = m * g;
+      
+      steps.push({
+        description: "Substitute the values:",
+        expression: `W = ${m} · ${g}`,
+        value: weight.toFixed(2) + " N"
+      });
+      
+      result = weight;
+    }
+    else {
+      return {
+        result: "Insufficient parameters",
+        steps: [{
+          description: "Error:",
+          expression: "Not enough parameters to solve the dynamics problem"
+        }],
+        error: "Please provide at least mass and force (or acceleration)."
+      };
+    }
+    
+    return {
+      result: typeof result === 'number' ? parseFloat(result.toFixed(4)) : result,
+      steps
+    };
+  } catch (error) {
+    console.error("Dynamics calculation error:", error);
+    return {
+      result: "Error",
+      steps: [{
+        description: "Error occurred:",
+        expression: error instanceof Error ? error.message : "Unknown error"
+      }],
+      error: "Failed to solve the dynamics problem. Please check your inputs."
+    };
+  }
+};
+
+export const solveCircuits = (params: Record<string, number | string>): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    let result: number | string = 0;
+    
+    // Check for circuit type and calculation
+    if (params.circuitType === 'series') {
+      if (params.resistance1 !== undefined && params.resistance2 !== undefined) {
+        // Series circuit: total resistance is sum of individual resistances
+        const r1 = Number(params.resistance1);
+        const r2 = Number(params.resistance2);
+        
+        steps.push({
+          description: "Calculate total resistance in a series circuit:",
+          expression: "Rtotal = R₁ + R₂"
+        });
+        
+        const totalResistance = r1 + r2;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `Rtotal = ${r1} + ${r2}`,
+          value: totalResistance.toFixed(2) + " Ω"
+        });
+        
+        // If we have voltage, calculate current using Ohm's law
+        if (params.voltage !== undefined) {
+          const V = Number(params.voltage);
+          
+          steps.push({
+            description: "Calculate current using Ohm's law:",
+            expression: "I = V / Rtotal"
+          });
+          
+          const current = V / totalResistance;
+          
+          steps.push({
+            description: "Substitute the values:",
+            expression: `I = ${V} / ${totalResistance.toFixed(2)}`,
+            value: current.toFixed(4) + " A"
+          });
+          
+          result = current;
+        } else {
+          result = totalResistance;
+        }
+      }
+    } 
+    else if (params.circuitType === 'parallel') {
+      if (params.resistance1 !== undefined && params.resistance2 !== undefined) {
+        // Parallel circuit: 1/Rtotal = 1/R1 + 1/R2
+        const r1 = Number(params.resistance1);
+        const r2 = Number(params.resistance2);
+        
+        steps.push({
+          description: "Calculate total resistance in a parallel circuit:",
+          expression: "1/Rtotal = 1/R₁ + 1/R₂"
+        });
+        
+        const inverseTotal = 1/r1 + 1/r2;
+        const totalResistance = 1 / inverseTotal;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `1/Rtotal = 1/${r1} + 1/${r2}`,
+          value: inverseTotal.toFixed(4)
+        });
+        
+        steps.push({
+          description: "Calculate Rtotal:",
+          expression: `Rtotal = 1/(${inverseTotal.toFixed(4)})`,
+          value: totalResistance.toFixed(2) + " Ω"
+        });
+        
+        // If we have voltage, calculate total current using Ohm's law
+        if (params.voltage !== undefined) {
+          const V = Number(params.voltage);
+          
+          steps.push({
+            description: "Calculate total current using Ohm's law:",
+            expression: "I = V / Rtotal"
+          });
+          
+          const totalCurrent = V / totalResistance;
+          
+          steps.push({
+            description: "Substitute the values:",
+            expression: `I = ${V} / ${totalResistance.toFixed(2)}`,
+            value: totalCurrent.toFixed(4) + " A"
+          });
+          
+          result = totalCurrent;
+        } else {
+          result = totalResistance;
+        }
+      }
+    }
+    else if (params.operation === 'ohmsLaw') {
+      // Ohm's Law calculations
+      if (params.voltage !== undefined && params.current !== undefined) {
+        // Calculate resistance: R = V/I
+        const V = Number(params.voltage);
+        const I = Number(params.current);
+        
+        steps.push({
+          description: "Calculate resistance using Ohm's law:",
+          expression: "R = V / I"
+        });
+        
+        const resistance = V / I;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `R = ${V} / ${I}`,
+          value: resistance.toFixed(2) + " Ω"
+        });
+        
+        result = resistance;
+      }
+      else if (params.resistance !== undefined && params.current !== undefined) {
+        // Calculate voltage: V = IR
+        const R = Number(params.resistance);
+        const I = Number(params.current);
+        
+        steps.push({
+          description: "Calculate voltage using Ohm's law:",
+          expression: "V = I · R"
+        });
+        
+        const voltage = I * R;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `V = ${I} · ${R}`,
+          value: voltage.toFixed(2) + " V"
+        });
+        
+        result = voltage;
+      }
+      else if (params.voltage !== undefined && params.resistance !== undefined) {
+        // Calculate current: I = V/R
+        const V = Number(params.voltage);
+        const R = Number(params.resistance);
+        
+        steps.push({
+          description: "Calculate current using Ohm's law:",
+          expression: "I = V / R"
+        });
+        
+        const current = V / R;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `I = ${V} / ${R}`,
+          value: current.toFixed(4) + " A"
+        });
+        
+        result = current;
+      }
+    }
+    else if (params.operation === 'power') {
+      // Power calculations: P = VI
+      if (params.voltage !== undefined && params.current !== undefined) {
+        const V = Number(params.voltage);
+        const I = Number(params.current);
+        
+        steps.push({
+          description: "Calculate power:",
+          expression: "P = V · I"
+        });
+        
+        const power = V * I;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `P = ${V} · ${I}`,
+          value: power.toFixed(2) + " W"
+        });
+        
+        result = power;
+      }
+      else if (params.resistance !== undefined && params.current !== undefined) {
+        // P = I²R
+        const R = Number(params.resistance);
+        const I = Number(params.current);
+        
+        steps.push({
+          description: "Calculate power using current and resistance:",
+          expression: "P = I² · R"
+        });
+        
+        const power = Math.pow(I, 2) * R;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `P = ${I}² · ${R}`,
+          value: power.toFixed(2) + " W"
+        });
+        
+        result = power;
+      }
+      else if (params.voltage !== undefined && params.resistance !== undefined) {
+        // P = V²/R
+        const V = Number(params.voltage);
+        const R = Number(params.resistance);
+        
+        steps.push({
+          description: "Calculate power using voltage and resistance:",
+          expression: "P = V² / R"
+        });
+        
+        const power = Math.pow(V, 2) / R;
+        
+        steps.push({
+          description: "Substitute the values:",
+          expression: `P = ${V}² / ${R}`,
+          value: power.toFixed(2) + " W"
+        });
+        
+        result = power;
+      }
+    }
+    else {
+      return {
+        result: "Insufficient parameters",
+        steps: [{
+          description: "Error:",
+          expression: "Not enough parameters or invalid circuit operation"
+        }],
+        error: "Please specify the circuit type (series/parallel) or operation (ohmsLaw/power) and provide relevant parameters."
+      };
+    }
+    
+    return {
+      result: typeof result === 'number' ? parseFloat(result.toFixed(4)) : result,
+      steps
+    };
+  } catch (error) {
+    console.error("Circuit calculation error:", error);
+    return {
+      result: "Error",
+      steps: [{
+        description: "Error occurred:",
+        expression: error instanceof Error ? error.message : "Unknown error"
+      }],
+      error: "Failed to solve the circuit problem. Please check your inputs."
+    };
+  }
+};
+
+export const solveLaplace = (params: Record<string, string>): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    let result = "";
+    
+    if (params.transform === 'time-to-s' && params.expression) {
+      const expr = params.expression;
+      
+      // Simple time domain to s-domain transformations
+      if (expr.match(/^t(\^(\d+))?$/)) {
+        // t^n → n!/s^(n+1)
+        const match = expr.match(/^t(?:\^(\d+))?$/);
+        const n = match && match[1] ? parseInt(match[1], 10) : 1;
+        
+        steps.push({
+          description: `Apply Laplace transform for t^${n}:`,
+          expression: `L{t^${n}} = ${n}! / s^${n+1}`
+        });
+        
+        // Calculate factorial
+        let factorial = 1;
+        for (let i = 2; i <= n; i++) {
+          factorial *= i;
+        }
+        
+        const transformed = `${factorial === 1 ? '' : factorial + ' '}/ s^${n+1}`;
+        
+        steps.push({
+          description: "Simplified result:",
+          expression: transformed
+        });
+        
+        result = transformed;
+      }
+      else if (expr.match(/^e\^(-?\d*\.?\d*t)$/)) {
+        // e^at → 1/(s-a)
+        const match = expr.match(/^e\^((-?\d*\.?\d*)t)$/);
+        const a = match && match[1] ? parseFloat(match[1]) : 1;
+        
+        steps.push({
+          description: `Apply Laplace transform for e^(${a}t):`,
+          expression: `L{e^(${a}t)} = 1/(s${a < 0 ? '+' + Math.abs(a) : '-' + a})`
+        });
+        
+        const transformed = `1/(s${a < 0 ? '+' + Math.abs(a) : '-' + a})`;
+        
+        result = transformed;
+      }
+      else if (expr.match(/^sin\((\d*\.?\d*)t\)$/)) {
+        // sin(ωt) → ω/(s^2 + ω^2)
+        const match = expr.match(/^sin\((\d*\.?\d*)t\)$/);
+        const omega = match && match[1] ? parseFloat(match[1]) : 1;
+        
+        steps.push({
+          description: `Apply Laplace transform for sin(${omega}t):`,
+          expression: `L{sin(${omega}t)} = ${omega}/(s^2 + ${omega}^2)`
+        });
+        
+        const transformed = `${omega === 1 ? '' : omega}/(s^2 + ${omega * omega})`;
+        
+        steps.push({
+          description: "Simplified result:",
+          expression: transformed
+        });
+        
+        result = transformed;
+      }
+      else if (expr.match(/^cos\((\d*\.?\d*)t\)$/)) {
+        // cos(ωt) → s/(s^2 + ω^2)
+        const match = expr.match(/^cos\((\d*\.?\d*)t\)$/);
+        const omega = match && match[1] ? parseFloat(match[1]) : 1;
+        
+        steps.push({
+          description: `Apply Laplace transform for cos(${omega}t):`,
+          expression: `L{cos(${omega}t)} = s/(s^2 + ${omega}^2)`
+        });
+        
+        const transformed = `s/(s^2 + ${omega * omega})`;
+        
+        steps.push({
+          description: "Simplified result:",
+          expression: transformed
+        });
+        
+        result = transformed;
+      }
+      else {
+        steps.push({
+          description: "Note:",
+          expression: "Only basic Laplace transforms are implemented in this demo."
+        });
+        
+        steps.push({
+          description: "Supported forms:",
+          expression: "t^n, e^(at), sin(ωt), cos(ωt)"
+        });
+        
+        result = "Unsupported expression";
+      }
+    }
+    else if (params.transform === 's-to-time' && params.expression) {
+      const expr = params.expression;
+      
+      // Simple s-domain to time-domain transformations
+      if (expr.match(/^1\/s(\^(\d+))?$/)) {
+        // 1/s^n → t^(n-1)/(n-1)!
+        const match = expr.match(/^1\/s(?:\^(\d+))?$/);
+        const n = match && match[1] ? parseInt(match[1], 10) : 1;
+        
+        steps.push({
+          description: `Apply inverse Laplace transform for 1/s^${n}:`,
+          expression: `L^{-1}{1/s^${n}} = t^${n-1}/${n-1}!`
+        });
+        
+        // Calculate factorial
+        let factorial = 1;
+        for (let i = 2; i <= n-1; i++) {
+          factorial *= i;
+        }
+        
+        let transformed;
+        if (n === 1) {
+          transformed = "1";
+        } else if (n === 2) {
+          transformed = "t";
+        } else {
+          transformed = `t^${n-1}${factorial === 1 ? '' : '/' + factorial}`;
+        }
+        
+        steps.push({
+          description: "Simplified result:",
+          expression: transformed
+        });
+        
+        result = transformed;
+      }
+      else if (expr.match(/^1\/(s(\+|\-)(\d*\.?\d*))$/)) {
+        // 1/(s±a) → e^(∓at)
+        const match = expr.match(/^1\/(s(\+|\-)(\d*\.?\d*))$/);
+        const sign = match && match[2] ? match[2] : '+';
+        const a = match && match[3] ? parseFloat(match[3]) : 0;
+        
+        steps.push({
+          description: `Apply inverse Laplace transform for 1/(s${sign}${a}):`,
+          expression: `L^{-1}{1/(s${sign}${a})} = e^(${sign === '+' ? '-' : ''}${a}t)`
+        });
+        
+        const transformed = `e^(${sign === '+' ? '-' : ''}${a}t)`;
+        
+        result = transformed;
+      }
+      else if (expr.match(/^(\d*\.?\d*)\/(s\^2\+(\d*\.?\d*))$/)) {
+        // ω/(s^2 + ω^2) → sin(ωt)
+        const match = expr.match(/^(\d*\.?\d*)\/(s\^2\+(\d*\.?\d*))$/);
+        const coef = match && match[1] && match[1] !== '' ? parseFloat(match[1]) : 1;
+        const omega2 = match && match[3] ? parseFloat(match[3]) : 1;
+        const omega = Math.sqrt(omega2);
+        
+        steps.push({
+          description: `Apply inverse Laplace transform for ${coef}/(s^2+${omega2}):`,
+          expression: `L^{-1}{${coef === 1 ? '' : coef}/(s^2+${omega2})} = ${coef === 1 ? '' : coef + '·'}sin(${omega}t)`
+        });
+        
+        const transformed = `${coef === 1 ? '' : coef + '·'}sin(${omega}t)`;
+        
+        result = transformed;
+      }
+      else if (expr.match(/^s\/(s\^2\+(\d*\.?\d*))$/)) {
+        // s/(s^2 + ω^2) → cos(ωt)
+        const match = expr.match(/^s\/(s\^2\+(\d*\.?\d*))$/);
+        const omega2 = match && match[1] ? parseFloat(match[1]) : 1;
+        const omega = Math.sqrt(omega2);
+        
+        steps.push({
+          description: `Apply inverse Laplace transform for s/(s^2+${omega2}):`,
+          expression: `L^{-1}{s/(s^2+${omega2})} = cos(${omega}t)`
+        });
+        
+        const transformed = `cos(${omega}t)`;
+        
+        result = transformed;
+      }
+      else {
+        steps.push({
+          description: "Note:",
+          expression: "Only basic inverse Laplace transforms are implemented in this demo."
+        });
+        
+        steps.push({
+          description: "Supported forms:",
+          expression: "1/s^n, 1/(s±a), ω/(s^2+ω^2), s/(s^2+ω^2)"
+        });
+        
+        result = "Unsupported expression";
+      }
+    }
+    else {
+      return {
+        result: "Insufficient parameters",
+        steps: [{
+          description: "Error:",
+          expression: "Missing parameters or invalid Laplace transform operation"
+        }],
+        error: "Please specify the transform direction (time-to-s or s-to-time) and provide an expression."
+      };
+    }
+    
+    return {
+      result,
+      steps
+    };
+  } catch (error) {
+    console.error("Laplace transform error:", error);
+    return {
+      result: "Error",
+      steps: [{
+        description: "Error occurred:",
+        expression: error instanceof Error ? error.message : "Unknown error"
+      }],
+      error: "Failed to perform Laplace transform. Please check your inputs."
+    };
+  }
+};
