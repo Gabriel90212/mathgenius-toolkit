@@ -1,3 +1,4 @@
+
 // Constants for mathematical operations
 export const OPERATIONS = {
   ADD: '+',
@@ -96,6 +97,7 @@ export type Variable = 'x' | 'y' | 't';
 export type Expression = string;
 export type CalculusOperation = 'derivative' | 'integral';
 export type ChemistryOperation = 'balance' | 'stoichiometry';
+export type PhysicsOperation = 'kinematics' | 'dynamics' | 'circuits' | 'laplace';
 
 // Interface for calculus result with steps
 export interface CalculusResult {
@@ -119,6 +121,19 @@ export interface ChemistryResult {
 }
 
 export interface ChemistryStep {
+  description: string;
+  expression: string;
+}
+
+// Physics related interfaces
+export interface PhysicsResult {
+  input: string;
+  result: string;
+  steps: PhysicsStep[];
+  error?: string;
+}
+
+export interface PhysicsStep {
   description: string;
   expression: string;
 }
@@ -593,4 +608,780 @@ export const balanceChemicalEquation = (equation: string): ChemistryResult => {
     }
     
     steps.push({
-      description: "
+      description: "Balanced equation:",
+      expression: result
+    });
+    
+    return {
+      equation,
+      result,
+      steps,
+      error: balanced ? undefined : "Could not balance the equation after multiple attempts."
+    };
+  } catch (error) {
+    console.error("Error balancing chemical equation:", error);
+    return {
+      equation,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
+
+// Calculate stoichiometry for a chemical reaction
+export const calculateStoichiometry = (
+  equation: string,
+  knownAmount: number,
+  knownCompound: string,
+  targetCompound: string
+): ChemistryResult => {
+  try {
+    const steps: ChemistryStep[] = [];
+    
+    steps.push({
+      description: "Starting with balanced equation:",
+      expression: equation
+    });
+    
+    // Balance the equation first
+    const balancedResult = balanceChemicalEquation(equation);
+    const balancedEquation = balancedResult.result;
+    
+    // Parse the balanced equation
+    const { reactants, products } = parseChemicalEquation(balancedEquation);
+    
+    // Combine all compounds into one array for easier searching
+    const allCompounds = [...reactants, ...products];
+    
+    // Find the known and target compounds
+    let knownCompoundObj: ChemicalCompound | undefined;
+    let targetCompoundObj: ChemicalCompound | undefined;
+    
+    for (const compound of allCompounds) {
+      // Very simple matching by checking if the formula contains the compound string
+      // In a real implementation, you'd need a more robust comparison
+      const formula = compound.elements.map(e => 
+        e.count === 1 ? e.symbol : `${e.symbol}${e.count}`
+      ).join('');
+      
+      if (formula === knownCompound) {
+        knownCompoundObj = compound;
+      }
+      
+      if (formula === targetCompound) {
+        targetCompoundObj = compound;
+      }
+    }
+    
+    if (!knownCompoundObj) {
+      throw new Error(`Could not find compound ${knownCompound} in the equation`);
+    }
+    
+    if (!targetCompoundObj) {
+      throw new Error(`Could not find compound ${targetCompound} in the equation`);
+    }
+    
+    // Calculate molar masses
+    const knownMolarMass = calculateMolarMass(knownCompound);
+    const targetMolarMass = calculateMolarMass(targetCompound);
+    
+    steps.push({
+      description: "Calculate molar masses:",
+      expression: `${knownCompound}: ${knownMolarMass.toFixed(2)} g/mol\n${targetCompound}: ${targetMolarMass.toFixed(2)} g/mol`
+    });
+    
+    // Convert known amount to moles
+    const knownMoles = knownAmount / knownMolarMass;
+    
+    steps.push({
+      description: "Convert known amount to moles:",
+      expression: `${knownAmount} g ÷ ${knownMolarMass.toFixed(2)} g/mol = ${knownMoles.toFixed(4)} mol`
+    });
+    
+    // Use the ratio from the balanced equation to find target moles
+    const moleRatio = targetCompoundObj.coefficient / knownCompoundObj.coefficient;
+    const targetMoles = knownMoles * moleRatio;
+    
+    steps.push({
+      description: "Apply mole ratio from balanced equation:",
+      expression: `${targetCompound} / ${knownCompound} = ${targetCompoundObj.coefficient} / ${knownCompoundObj.coefficient} = ${moleRatio}\n${knownMoles.toFixed(4)} mol × ${moleRatio} = ${targetMoles.toFixed(4)} mol`
+    });
+    
+    // Convert target moles to grams
+    const targetAmount = targetMoles * targetMolarMass;
+    
+    steps.push({
+      description: "Convert target moles to mass:",
+      expression: `${targetMoles.toFixed(4)} mol × ${targetMolarMass.toFixed(2)} g/mol = ${targetAmount.toFixed(2)} g`
+    });
+    
+    return {
+      equation: balancedEquation,
+      result: `${targetAmount.toFixed(2)} g`,
+      steps
+    };
+  } catch (error) {
+    console.error("Error calculating stoichiometry:", error);
+    return {
+      equation,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
+
+// Calculate derivative for calculus mode
+export const calculateDerivative = (expression: string, variable: Variable): CalculusResult => {
+  try {
+    const steps: CalculusStep[] = [];
+    
+    steps.push({
+      description: "Original expression:",
+      expression
+    });
+    
+    // This is a simplified implementation that handles basic polynomials
+    // A real implementation would use a math library like math.js or mathjs
+    
+    // Basic power rule: d/dx(x^n) = n*x^(n-1)
+    const powerRuleMatch = expression.match(new RegExp(`${variable}\\^(\\d+)`));
+    if (powerRuleMatch) {
+      const power = parseInt(powerRuleMatch[1], 10);
+      
+      steps.push({
+        description: "Apply the power rule:",
+        expression: `d/d${variable}(${variable}^${power}) = ${power} × ${variable}^${power-1}`
+      });
+      
+      const result = power === 1 
+        ? "1" 
+        : power === 2 
+          ? `2${variable}` 
+          : `${power}${variable}^${power-1}`;
+          
+      return {
+        expression,
+        result,
+        steps
+      };
+    }
+    
+    // Basic constant rule: d/dx(c) = 0
+    if (!expression.includes(variable)) {
+      steps.push({
+        description: "Apply the constant rule:",
+        expression: `d/d${variable}(${expression}) = 0`
+      });
+      
+      return {
+        expression,
+        result: "0",
+        steps
+      };
+    }
+    
+    // Linear term: d/dx(x) = 1
+    if (expression === variable) {
+      steps.push({
+        description: "Apply the basic rule:",
+        expression: `d/d${variable}(${variable}) = 1`
+      });
+      
+      return {
+        expression,
+        result: "1",
+        steps
+      };
+    }
+    
+    // Simple coefficient: d/dx(a*x) = a
+    const coefficientMatch = expression.match(new RegExp(`(\\d+)${variable}`));
+    if (coefficientMatch) {
+      const coefficient = coefficientMatch[1];
+      
+      steps.push({
+        description: "Apply the constant multiple rule:",
+        expression: `d/d${variable}(${coefficient}${variable}) = ${coefficient}`
+      });
+      
+      return {
+        expression,
+        result: coefficient,
+        steps
+      };
+    }
+    
+    // If we can't handle the expression, provide a generic explanation
+    return {
+      expression,
+      result: "Cannot compute",
+      steps: [
+        {
+          description: "This simplified calculator can only handle basic polynomials:",
+          expression: "Examples: x, 2x, x^2, 3x^4"
+        }
+      ],
+      error: "Expression too complex for this demo calculator"
+    };
+  } catch (error) {
+    console.error("Error calculating derivative:", error);
+    return {
+      expression,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
+
+// Calculate integral for calculus mode
+export const calculateIntegral = (expression: string, variable: Variable): CalculusResult => {
+  try {
+    const steps: CalculusStep[] = [];
+    
+    steps.push({
+      description: "Original expression:",
+      expression
+    });
+    
+    // This is a simplified implementation that handles basic polynomials
+    // A real implementation would use a math library
+    
+    // Basic power rule: ∫(x^n)dx = x^(n+1)/(n+1) + C
+    const powerRuleMatch = expression.match(new RegExp(`${variable}\\^(\\d+)`));
+    if (powerRuleMatch) {
+      const power = parseInt(powerRuleMatch[1], 10);
+      const newPower = power + 1;
+      
+      steps.push({
+        description: "Apply the power rule for integration:",
+        expression: `∫${variable}^${power} d${variable} = ${variable}^${newPower}/${newPower} + C`
+      });
+      
+      const result = `${variable}^${newPower}/${newPower} + C`;
+          
+      return {
+        expression,
+        result,
+        steps
+      };
+    }
+    
+    // Basic constant rule: ∫c dx = c*x + C
+    if (!expression.includes(variable)) {
+      steps.push({
+        description: "Apply the constant rule for integration:",
+        expression: `∫${expression} d${variable} = ${expression}${variable} + C`
+      });
+      
+      return {
+        expression,
+        result: `${expression}${variable} + C`,
+        steps
+      };
+    }
+    
+    // Linear term: ∫x dx = x^2/2 + C
+    if (expression === variable) {
+      steps.push({
+        description: "Apply the basic rule for integration:",
+        expression: `∫${variable} d${variable} = ${variable}^2/2 + C`
+      });
+      
+      return {
+        expression,
+        result: `${variable}^2/2 + C`,
+        steps
+      };
+    }
+    
+    // Simple coefficient: ∫(a*x) dx = a*x^2/2 + C
+    const coefficientMatch = expression.match(new RegExp(`(\\d+)${variable}`));
+    if (coefficientMatch) {
+      const coefficient = coefficientMatch[1];
+      
+      steps.push({
+        description: "Apply the constant multiple rule for integration:",
+        expression: `∫${coefficient}${variable} d${variable} = ${coefficient}(${variable}^2/2) + C = ${coefficient}${variable}^2/2 + C`
+      });
+      
+      return {
+        expression,
+        result: `${coefficient}${variable}^2/2 + C`,
+        steps
+      };
+    }
+    
+    // If we can't handle the expression, provide a generic explanation
+    return {
+      expression,
+      result: "Cannot compute",
+      steps: [
+        {
+          description: "This simplified calculator can only handle basic polynomials:",
+          expression: "Examples: x, 2x, x^2, 3x^4"
+        }
+      ],
+      error: "Expression too complex for this demo calculator"
+    };
+  } catch (error) {
+    console.error("Error calculating integral:", error);
+    return {
+      expression,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
+
+// Calculate kinematics problems for physics mode
+export const calculateKinematics = (input: string, type: string): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    
+    steps.push({
+      description: "Kinematics equation inputs:",
+      expression: input
+    });
+    
+    // Parse the input parameters
+    // Expected format: u|v|a|t|s (initial velocity|final velocity|acceleration|time|distance)
+    const params = input.split('|').map(p => p.trim());
+    
+    if (params.length !== 5) {
+      throw new Error("Please provide all five parameters (use '?' for unknown): u|v|a|t|s");
+    }
+    
+    let [u, v, a, t, s] = params.map(p => p === '?' ? null : parseFloat(p));
+    
+    // Basic kinematic equations:
+    // 1. v = u + at
+    // 2. s = ut + 0.5at²
+    // 3. s = vt - 0.5at²
+    // 4. v² = u² + 2as
+    // 5. s = 0.5(u + v)t
+    
+    let result = "?";
+    
+    if (type === 'distance' && s === null) {
+      // Calculate distance
+      if (u !== null && v !== null && t !== null) {
+        // Equation 5: s = 0.5(u + v)t
+        s = 0.5 * (u + v) * t;
+        result = `s = ${s.toFixed(2)} m`;
+        
+        steps.push({
+          description: "Using average velocity equation:",
+          expression: `s = 0.5(u + v)t = 0.5(${u} + ${v}) × ${t} = ${s.toFixed(2)} m`
+        });
+      } 
+      else if (u !== null && a !== null && t !== null) {
+        // Equation 2: s = ut + 0.5at²
+        s = u * t + 0.5 * a * t * t;
+        result = `s = ${s.toFixed(2)} m`;
+        
+        steps.push({
+          description: "Using initial velocity and acceleration equation:",
+          expression: `s = ut + 0.5at² = ${u} × ${t} + 0.5 × ${a} × ${t}² = ${s.toFixed(2)} m`
+        });
+      }
+      else if (v !== null && a !== null && t !== null) {
+        // Equation 3: s = vt - 0.5at²
+        s = v * t - 0.5 * a * t * t;
+        result = `s = ${s.toFixed(2)} m`;
+        
+        steps.push({
+          description: "Using final velocity and acceleration equation:",
+          expression: `s = vt - 0.5at² = ${v} × ${t} - 0.5 × ${a} × ${t}² = ${s.toFixed(2)} m`
+        });
+      }
+      else if (u !== null && v !== null && a !== null) {
+        // Equation 4: v² = u² + 2as
+        s = (v * v - u * u) / (2 * a);
+        result = `s = ${s.toFixed(2)} m`;
+        
+        steps.push({
+          description: "Using velocity-acceleration relationship:",
+          expression: `v² = u² + 2as\ns = (v² - u²)/(2a) = (${v}² - ${u}²)/(2 × ${a}) = ${s.toFixed(2)} m`
+        });
+      }
+    }
+    else if (type === 'velocity' && v === null) {
+      // Calculate final velocity
+      if (u !== null && a !== null && t !== null) {
+        // Equation 1: v = u + at
+        v = u + a * t;
+        result = `v = ${v.toFixed(2)} m/s`;
+        
+        steps.push({
+          description: "Using basic acceleration equation:",
+          expression: `v = u + at = ${u} + ${a} × ${t} = ${v.toFixed(2)} m/s`
+        });
+      }
+      else if (u !== null && a !== null && s !== null) {
+        // Equation 4: v² = u² + 2as
+        v = Math.sqrt(u * u + 2 * a * s);
+        result = `v = ${v.toFixed(2)} m/s`;
+        
+        steps.push({
+          description: "Using energy-conservation equation:",
+          expression: `v² = u² + 2as\nv = √(u² + 2as) = √(${u}² + 2 × ${a} × ${s}) = ${v.toFixed(2)} m/s`
+        });
+      }
+      else if (u !== null && s !== null && t !== null) {
+        // Equation 5: s = 0.5(u + v)t
+        // Rearranged: v = 2s/t - u
+        v = 2 * s / t - u;
+        result = `v = ${v.toFixed(2)} m/s`;
+        
+        steps.push({
+          description: "Using average velocity equation:",
+          expression: `s = 0.5(u + v)t\nv = 2s/t - u = 2 × ${s}/${t} - ${u} = ${v.toFixed(2)} m/s`
+        });
+      }
+    }
+    
+    return {
+      input,
+      result,
+      steps,
+      error: result === "?" ? "Insufficient information to calculate" : undefined
+    };
+  } catch (error) {
+    console.error("Error in kinematics calculation:", error);
+    return {
+      input,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
+
+// Calculate dynamics problems for physics mode
+export const calculateDynamics = (input: string, type: string): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    
+    steps.push({
+      description: "Dynamics equation inputs:",
+      expression: input
+    });
+    
+    // Parse the input parameters
+    // Expected format: m|a|F (mass|acceleration|force)
+    const params = input.split('|').map(p => p.trim());
+    
+    if (params.length < 2) {
+      throw new Error("Please provide at least two parameters separated by '|'");
+    }
+    
+    let result = "?";
+    
+    if (type === 'force') {
+      // Calculate force using F = ma
+      if (params.length >= 2) {
+        const m = parseFloat(params[0]);
+        const a = parseFloat(params[1]);
+        
+        if (!isNaN(m) && !isNaN(a)) {
+          const force = m * a;
+          result = `F = ${force.toFixed(2)} N`;
+          
+          steps.push({
+            description: "Using Newton's Second Law:",
+            expression: `F = m × a = ${m} kg × ${a} m/s² = ${force.toFixed(2)} N`
+          });
+        }
+      }
+    }
+    else if (type === 'energy') {
+      // Calculate kinetic energy using K = 0.5mv²
+      if (params.length >= 2) {
+        const m = parseFloat(params[0]);
+        const v = parseFloat(params[1]);
+        
+        if (!isNaN(m) && !isNaN(v)) {
+          const kineticEnergy = 0.5 * m * v * v;
+          result = `KE = ${kineticEnergy.toFixed(2)} J`;
+          
+          steps.push({
+            description: "Calculating Kinetic Energy:",
+            expression: `KE = 0.5 × m × v² = 0.5 × ${m} kg × (${v} m/s)² = ${kineticEnergy.toFixed(2)} J`
+          });
+        }
+      }
+    }
+    
+    return {
+      input,
+      result,
+      steps,
+      error: result === "?" ? "Insufficient or invalid information provided" : undefined
+    };
+  } catch (error) {
+    console.error("Error in dynamics calculation:", error);
+    return {
+      input,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
+
+// Analyze electric circuits for physics mode
+export const analyzeCircuit = (input: string): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    
+    steps.push({
+      description: "Circuit analysis inputs:",
+      expression: input
+    });
+    
+    // Parse the input parameters
+    const params = input.split('|').map(p => p.trim());
+    
+    if (params.length < 2) {
+      throw new Error("Please provide circuit parameters separated by '|'");
+    }
+    
+    const circuitType = params[0].toLowerCase();
+    let result = "";
+    
+    if (circuitType === 'ohm') {
+      // Ohm's Law: V = IR
+      if (params.length === 3) {
+        // Parse the parameters based on which one is unknown (marked with '?')
+        let voltage = params[1] === '?' ? null : parseFloat(params[1]);
+        let current = params[2] === '?' ? null : parseFloat(params[2]);
+        const resistance = params[3] === '?' ? null : parseFloat(params[3]);
+        
+        if (voltage === null && current !== null && resistance !== null) {
+          // Calculate voltage
+          voltage = current * resistance;
+          result = `V = ${voltage.toFixed(2)} V`;
+          
+          steps.push({
+            description: "Using Ohm's Law to find voltage:",
+            expression: `V = I × R = ${current} A × ${resistance} Ω = ${voltage.toFixed(2)} V`
+          });
+        } 
+        else if (current === null && voltage !== null && resistance !== null) {
+          // Calculate current
+          current = voltage / resistance;
+          result = `I = ${current.toFixed(2)} A`;
+          
+          steps.push({
+            description: "Using Ohm's Law to find current:",
+            expression: `I = V / R = ${voltage} V / ${resistance} Ω = ${current.toFixed(2)} A`
+          });
+        }
+        else if (resistance === null && voltage !== null && current !== null) {
+          // Calculate resistance
+          resistance = voltage / current;
+          result = `R = ${resistance.toFixed(2)} Ω`;
+          
+          steps.push({
+            description: "Using Ohm's Law to find resistance:",
+            expression: `R = V / I = ${voltage} V / ${current} A = ${resistance.toFixed(2)} Ω`
+          });
+        }
+      }
+    }
+    else if (circuitType === 'series') {
+      // Series circuit: Rtotal = R1 + R2 + ...
+      const resistances = params.slice(1).map(r => parseFloat(r)).filter(r => !isNaN(r));
+      
+      if (resistances.length > 0) {
+        const totalResistance = resistances.reduce((sum, r) => sum + r, 0);
+        result = `Rtotal = ${totalResistance.toFixed(2)} Ω`;
+        
+        steps.push({
+          description: "Calculating total resistance in series:",
+          expression: `Rtotal = ${resistances.join(' + ')} = ${totalResistance.toFixed(2)} Ω`
+        });
+      }
+    }
+    else if (circuitType === 'parallel') {
+      // Parallel circuit: 1/Rtotal = 1/R1 + 1/R2 + ...
+      const resistances = params.slice(1).map(r => parseFloat(r)).filter(r => !isNaN(r));
+      
+      if (resistances.length > 0) {
+        const reciprocalSum = resistances.reduce((sum, r) => sum + 1/r, 0);
+        const totalResistance = 1 / reciprocalSum;
+        result = `Rtotal = ${totalResistance.toFixed(2)} Ω`;
+        
+        steps.push({
+          description: "Calculating total resistance in parallel:",
+          expression: `1/Rtotal = ${resistances.map(r => `1/${r}`).join(' + ')}\nRtotal = ${totalResistance.toFixed(2)} Ω`
+        });
+      }
+    }
+    
+    return {
+      input,
+      result,
+      steps,
+      error: result === "" ? "Unable to perform the requested circuit analysis" : undefined
+    };
+  } catch (error) {
+    console.error("Error in circuit analysis:", error);
+    return {
+      input,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
+
+// Calculate Laplace transforms for physics mode
+export const calculateLaplace = (input: string): PhysicsResult => {
+  try {
+    const steps: PhysicsStep[] = [];
+    
+    steps.push({
+      description: "Laplace transform input:",
+      expression: input
+    });
+    
+    // Parse the input parameters
+    const params = input.split('|').map(p => p.trim());
+    
+    if (params.length < 2) {
+      throw new Error("Please specify transform type and function");
+    }
+    
+    const transformType = params[0].toLowerCase();
+    const expression = params[1];
+    
+    let result = "";
+    
+    if (transformType === 'forward') {
+      // Forward Laplace transform examples
+      if (expression === '1') {
+        result = "L{1} = 1/s";
+        
+        steps.push({
+          description: "Applying forward Laplace transform to constant:",
+          expression: "L{1} = 1/s"
+        });
+      }
+      else if (expression === 't') {
+        result = "L{t} = 1/s²";
+        
+        steps.push({
+          description: "Applying forward Laplace transform to t:",
+          expression: "L{t} = 1/s²"
+        });
+      }
+      else if (expression === 't^2') {
+        result = "L{t²} = 2/s³";
+        
+        steps.push({
+          description: "Applying forward Laplace transform to t²:",
+          expression: "L{t²} = 2/s³"
+        });
+      }
+      else if (expression === 'e^at') {
+        // Parse 'a' from additional parameter if available
+        const a = params.length > 2 ? parseFloat(params[2]) : 1;
+        result = `L{e^(${a}t)} = 1/(s-${a})`;
+        
+        steps.push({
+          description: "Applying forward Laplace transform to exponential:",
+          expression: `L{e^(${a}t)} = 1/(s-${a})`
+        });
+      }
+      else if (expression === 'sin(at)') {
+        // Parse 'a' from additional parameter if available
+        const a = params.length > 2 ? parseFloat(params[2]) : 1;
+        result = `L{sin(${a}t)} = ${a}/(s²+${a}²)`;
+        
+        steps.push({
+          description: "Applying forward Laplace transform to sine:",
+          expression: `L{sin(${a}t)} = ${a}/(s²+${a}²)`
+        });
+      }
+      else if (expression === 'cos(at)') {
+        // Parse 'a' from additional parameter if available
+        const a = params.length > 2 ? parseFloat(params[2]) : 1;
+        result = `L{cos(${a}t)} = s/(s²+${a}²)`;
+        
+        steps.push({
+          description: "Applying forward Laplace transform to cosine:",
+          expression: `L{cos(${a}t)} = s/(s²+${a}²)`
+        });
+      }
+    }
+    else if (transformType === 'inverse') {
+      // Inverse Laplace transform examples
+      if (expression === '1/s') {
+        result = "L⁻¹{1/s} = 1";
+        
+        steps.push({
+          description: "Applying inverse Laplace transform:",
+          expression: "L⁻¹{1/s} = 1"
+        });
+      }
+      else if (expression === '1/s^2') {
+        result = "L⁻¹{1/s²} = t";
+        
+        steps.push({
+          description: "Applying inverse Laplace transform:",
+          expression: "L⁻¹{1/s²} = t"
+        });
+      }
+      else if (expression === '1/(s-a)') {
+        // Parse 'a' from additional parameter if available
+        const a = params.length > 2 ? parseFloat(params[2]) : 1;
+        result = `L⁻¹{1/(s-${a})} = e^(${a}t)`;
+        
+        steps.push({
+          description: "Applying inverse Laplace transform:",
+          expression: `L⁻¹{1/(s-${a})} = e^(${a}t)`
+        });
+      }
+      else if (expression === 'a/(s^2+a^2)') {
+        // Parse 'a' from additional parameter if available
+        const a = params.length > 2 ? parseFloat(params[2]) : 1;
+        result = `L⁻¹{${a}/(s²+${a}²)} = sin(${a}t)`;
+        
+        steps.push({
+          description: "Applying inverse Laplace transform:",
+          expression: `L⁻¹{${a}/(s²+${a}²)} = sin(${a}t)`
+        });
+      }
+      else if (expression === 's/(s^2+a^2)') {
+        // Parse 'a' from additional parameter if available
+        const a = params.length > 2 ? parseFloat(params[2]) : 1;
+        result = `L⁻¹{s/(s²+${a}²)} = cos(${a}t)`;
+        
+        steps.push({
+          description: "Applying inverse Laplace transform:",
+          expression: `L⁻¹{s/(s²+${a}²)} = cos(${a}t)`
+        });
+      }
+    }
+    
+    return {
+      input,
+      result,
+      steps,
+      error: result === "" ? "Unsupported Laplace transform expression" : undefined
+    };
+  } catch (error) {
+    console.error("Error in Laplace transform:", error);
+    return {
+      input,
+      result: "Error",
+      steps: [{ description: "Error", expression: error instanceof Error ? error.message : "Unknown error" }],
+      error: error instanceof Error ? error.message : "Unknown error"
+    };
+  }
+};
