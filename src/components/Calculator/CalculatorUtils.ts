@@ -279,6 +279,11 @@ export const getElementInfo = (symbol: string) => {
   return periodicTableElements[symbol] || null;
 };
 
+// Get all element symbols as an array
+export const getAllElementSymbols = (): string[] => {
+  return Object.keys(periodicTableElements);
+};
+
 // Parse a chemical formula into elements and their counts
 const parseChemicalFormula = (formula: string): ChemicalElement[] => {
   const elements: ChemicalElement[] = [];
