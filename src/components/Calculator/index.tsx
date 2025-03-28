@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -669,12 +670,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
 
             <Button value="4" onClick={() => handleNumberInput('4')} />
             <Button value="5" onClick={() => handleNumberInput('5')} />
-            <Button value="6" onClick={() => handleNumberInput('6')} variant="operator" />
+            <Button value="6" onClick={() => handleNumberInput('6')} />
             <Button value="*" onClick={() => handlePhysicsInput('*')} variant="operator" />
 
             <Button value="1" onClick={() => handleNumberInput('1')} />
             <Button value="2" onClick={() => handleNumberInput('2')} />
-            <Button value="3" onClick={() => handlePhysicsInput('-')} variant="operator" />
+            <Button value="3" onClick={() => handleNumberInput('3')} />
             <Button value="-" onClick={() => handlePhysicsInput('-')} variant="operator" />
 
             <Button value="0" onClick={() => handleNumberInput('0')} />
@@ -796,4 +797,25 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             <Button value="9" onClick={handleNumberInput} />
             <Button value={OPERATIONS.DIVIDE} onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
 
-            <Button value="4"
+            <Button value="4" onClick={handleNumberInput} />
+            <Button value="5" onClick={handleNumberInput} />
+            <Button value="6" onClick={handleNumberInput} />
+            <Button value={OPERATIONS.MULTIPLY} onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+
+            <Button value="1" onClick={handleNumberInput} />
+            <Button value="2" onClick={handleNumberInput} />
+            <Button value="3" onClick={handleNumberInput} />
+            <Button value="-" onClick={() => handleOperation("-")} variant="operator" />
+
+            <Button value="0" onClick={handleNumberInput} />
+            <Button value="." onClick={handleNumberInput} />
+            <Button value="=" onClick={handleEquals} variant="equal" />
+            <Button value="+" onClick={() => handleOperation("+")} variant="operator" />
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Calculator;
