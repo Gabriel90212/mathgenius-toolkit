@@ -44,11 +44,6 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({ result, operation, classNam
                   <div className="font-mono bg-muted/50 p-1 rounded mt-1">
                     {step.expression}
                   </div>
-                  {step.value && (
-                    <div className="text-right text-muted-foreground mt-1">
-                      = {step.value}
-                    </div>
-                  )}
                 </div>
               ))}
             </div>

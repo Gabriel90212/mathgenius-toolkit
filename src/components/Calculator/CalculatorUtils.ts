@@ -1,4 +1,3 @@
-
 // Constants for mathematical operations
 export const OPERATIONS = {
   ADD: '+',
@@ -1159,7 +1158,7 @@ export const analyzeCircuit = (input: string): PhysicsResult => {
         // Parse the parameters based on which one is unknown (marked with '?')
         let voltage = params[1] === '?' ? null : parseFloat(params[1]);
         let current = params[2] === '?' ? null : parseFloat(params[2]);
-        const resistance = params[3] === '?' ? null : parseFloat(params[3]);
+        let resistance = params[3] === '?' ? null : parseFloat(params[3]);
         
         if (voltage === null && current !== null && resistance !== null) {
           // Calculate voltage
