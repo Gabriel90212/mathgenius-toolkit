@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface CalculusStepsProps {
   result: CalculusResult | null;
-  operation: 'derivative' | 'integral' | null;
+  operation: 'derivative' | 'integral' | 'double-integral' | 'triple-integral' | null;
   className?: string;
 }
 
@@ -15,8 +15,27 @@ const CalculusSteps: React.FC<CalculusStepsProps> = ({ result, operation, classN
     return null;
   }
 
-  const operationSymbol = operation === 'derivative' ? 'd/dx' : '∫';
-  const title = operation === 'derivative' ? 'Derivative' : 'Integral';
+  let operationSymbol = '';
+  let title = '';
+  
+  switch (operation) {
+    case 'derivative':
+      operationSymbol = 'd/dx';
+      title = 'Derivative';
+      break;
+    case 'integral':
+      operationSymbol = '∫';
+      title = 'Integral';
+      break;
+    case 'double-integral':
+      operationSymbol = '∫∫';
+      title = 'Double Integral';
+      break;
+    case 'triple-integral':
+      operationSymbol = '∫∫∫';
+      title = 'Triple Integral';
+      break;
+  }
 
   return (
     <div className={cn("bg-calculator-display rounded-2xl p-4 mt-4 display-glass", className)}>
@@ -47,6 +66,17 @@ const CalculusSteps: React.FC<CalculusStepsProps> = ({ result, operation, classN
               {result.error && (
                 <div className="text-destructive mt-2">
                   Note: {result.error}
+                </div>
+              )}
+              
+              {(operation === 'double-integral' || operation === 'triple-integral') && (
+                <div className="bg-muted p-3 rounded-md mt-3">
+                  <div className="text-sm text-muted-foreground mb-1">Integration Order:</div>
+                  <div className="text-base">
+                    {operation === 'double-integral' 
+                      ? "First with respect to the inner variable, then the outer variable" 
+                      : "First with respect to the innermost variable, then middle, then outermost"}
+                  </div>
                 </div>
               )}
             </div>
