@@ -29,8 +29,9 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     if (!ctx) return;
     
     // Set canvas dimensions to match the display size
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
     
     // Set initial canvas state
     ctx.lineJoin = "round";
@@ -56,9 +57,10 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
       // Save current drawing
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Resize canvas
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      // Resize canvas to actual display dimensions
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
       
       // Restore drawing
       ctx.putImageData(imageData, 0, 0);
@@ -96,8 +98,9 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
       clientY = e.clientY;
     }
     
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Calculate coordinates relative to canvas, taking DPI scaling into account
+    const x = ((clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((clientY - rect.top) / rect.height) * canvas.height;
     
     setLastX(x);
     setLastY(y);
@@ -130,8 +133,9 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
       clientY = e.clientY;
     }
     
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+    // Calculate coordinates relative to canvas, taking DPI scaling into account
+    const x = ((clientX - rect.left) / rect.width) * canvas.width;
+    const y = ((clientY - rect.top) / rect.height) * canvas.height;
     
     // Draw line
     ctx.beginPath();
