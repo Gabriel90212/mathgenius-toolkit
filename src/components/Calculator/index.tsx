@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
 import CalculusSteps from "./CalculusSteps";
 import ChemistrySteps from "./ChemistrySteps";
 import PhysicsSteps from "./PhysicsSteps";
+import CanvasCalculator from "./CanvasCalculator";
 import { 
   OPERATIONS, 
   formatNumber, 
@@ -55,12 +55,17 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [chemistryMode, setChemistryMode] = useState<boolean>(false);
   const [chemistryOperation, setChemistryOperation] = useState<ChemistryOperation | null>(null);
   const [chemistryResult, setChemistryResult] = useState<ChemistryResult | null>(null);
+  const [redoxMode, setRedoxMode] = useState<boolean>(false);
   
   // State for physics operations
   const [physicsMode, setPhysicsMode] = useState<boolean>(false);
   const [physicsOperation, setPhysicsOperation] = useState<PhysicsOperation | null>(null);
   const [physicsResult, setPhysicsResult] = useState<PhysicsResult | null>(null);
   const [physicsSubMode, setPhysicsSubMode] = useState<'kinematics' | 'dynamics' | 'circuits' | 'laplace'>('kinematics');
+  
+  // State for canvas calculator
+  const [showCanvas, setShowCanvas] = useState<boolean>(false);
+  const [canvasResult, setCanvasResult] = useState<string | null>(null);
   
   // Handle number input
   const handleNumberInput = (value: string) => {
@@ -129,6 +134,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       if (funcName === "pow") {
         // Correctly handle x² specifically
         result = Math.pow(currentValue, 2);
+      } else if (funcName === "pow_n") {
+        // For a custom exponent, store the current value and set the operation
+        setPendingOperation("^");
+        setStoredValue(currentValue);
+        setIsNewInput(true);
+        return;
       } else if (funcName in scientificFunctions) {
         // @ts-ignore
         result = scientificFunctions[funcName](currentValue);
@@ -527,6 +538,202 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
+  // New function to handle custom exponents
+  const handleExponent = (base: number, exponent: number) => {
+    try {
+      const result = Math.pow(base, exponent);
+      setDisplayValue(formatNumber(result));
+      setExpression(`${base}^${exponent}`);
+      setIsNewInput(true);
+    } catch (error) {
+      toast.error("Math error");
+      clearDisplay();
+    }
+  };
+  
+  // New function to handle redox notation
+  const handleRedoxNotation = (type: string) => {
+    if (type === 'e-') {
+      // Add electron symbol
+      handleChemicalInput('e⁻');
+    } else if (type === 'oxidation') {
+      // For oxidation state notation
+      toggleRedoxMode();
+    } else if (type.startsWith('oxidation-')) {
+      // Handle specific oxidation state, e.g. oxidation-3
+      const number = type.split('-')[1];
+      handleSuperscriptInput('+' + number);
+    } else if (type.startsWith('reduction-')) {
+      // Handle specific reduction state, e.g. reduction-2
+      const number = type.split('-')[1];
+      handleSuperscriptInput('-' + number);
+    }
+  };
+  
+  // Toggle redox mode
+  const toggleRedoxMode = () => {
+    setRedoxMode(!redoxMode);
+    if (!redoxMode) {
+      toast.info("Redox mode activated - select oxidation states");
+    }
+  };
+  
+  // Toggle canvas calculator mode
+  const toggleCanvasMode = () => {
+    setShowCanvas(!showCanvas);
+  };
+  
+  // Handle canvas calculation result
+  const handleCanvasCalculation = (result: string) => {
+    setCanvasResult(result);
+    
+    // Add to history
+    setHistory([result, ...history].slice(0, 10));
+  };
+  
+  // Handle general exponent input (for any x^n)
+  const handleExponentInput = () => {
+    if (!isNewInput) {
+      setDisplayValue(displayValue + "^");
+    } else {
+      setDisplayValue("^");
+      setIsNewInput(false);
+    }
+  };
+
+  // Handle +/- (sign change)
+  const handlePlusMinus = () => {
+    if (displayValue !== "0") {
+      setDisplayValue(
+        displayValue.charAt(0) === "-" 
+          ? displayValue.substring(1) 
+          : "-" + displayValue
+      );
+    }
+  };
+
+  // Clear everything
+  const clearAll = () => {
+    setDisplayValue("0");
+    setExpression("");
+    setStoredValue(null);
+    setPendingOperation(null);
+    setIsNewInput(true);
+    setCalculusResult(null);
+    setCalculusOperation(null);
+    setChemistryResult(null);
+    setChemistryOperation(null);
+    setPhysicsResult(null);
+    setPhysicsOperation(null);
+  };
+
+  // Clear only the display (CE)
+  const clearDisplay = () => {
+    setDisplayValue("0");
+    setIsNewInput(true);
+  };
+
+  // Delete the last character
+  const handleBackspace = () => {
+    if (!isNewInput && displayValue.length > 1) {
+      setDisplayValue(displayValue.slice(0, -1));
+    } else {
+      setDisplayValue("0");
+      setIsNewInput(true);
+    }
+  };
+
+  // Percentage calculation
+  const handlePercentage = () => {
+    const currentValue = parseFloat(displayValue);
+    
+    if (storedValue !== null) {
+      // If there's a pending operation, calculate percentage based on stored value
+      const percentValue = (storedValue * currentValue) / 100;
+      setDisplayValue(formatNumber(percentValue));
+    } else {
+      // Just convert the current value to a percentage
+      setDisplayValue(formatNumber(currentValue / 100));
+    }
+  };
+
+  // Add x, y, and other variable symbols for calculus mode
+  const handleVariableInput = (variable: string) => {
+    if (isNewInput) {
+      setDisplayValue(variable);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + variable);
+    }
+  };
+
+  // Toggle between variables (x, y, t)
+  const toggleVariable = () => {
+    setVariable(prev => {
+      if (prev === 'x') return 'y';
+      if (prev === 'y') return 't';
+      return 'x';
+    });
+    toast.info(`Variable set to ${variable}`);
+  };
+
+  // Handle chemical symbols and arrows for chemistry mode
+  const handleChemicalInput = (symbol: string) => {
+    if (isNewInput) {
+      setDisplayValue(symbol);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + symbol);
+    }
+  };
+  
+  // New function to handle subscripts (exponents) for chemical formulas
+  const handleSubscriptInput = (num: number) => {
+    if (isNewInput) {
+      setDisplayValue(num.toString());
+      setIsNewInput(false);
+    } else {
+      // Convert the number to a subscript character
+      const subscripts = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
+      setDisplayValue(displayValue + subscripts[num]);
+    }
+  };
+  
+  // New function to handle superscripts (for charges, etc.)
+  const handleSuperscriptInput = (symbol: string) => {
+    if (isNewInput) {
+      setDisplayValue(symbol);
+      setIsNewInput(false);
+    } else {
+      // Map of superscript characters
+      const superscriptMap: Record<string, string> = {
+        '+': '⁺',
+        '-': '⁻',
+        '1': '¹',
+        '2': '²',
+        '3': '³',
+        '4': '⁴',
+        '5': '⁵',
+        '6': '⁶',
+        '7': '⁷',
+        '8': '⁸',
+        '9': '⁹',
+        '0': '⁰'
+      };
+      setDisplayValue(displayValue + (superscriptMap[symbol] || symbol));
+    }
+  };
+  
+  // Add physics units and symbols for physics mode
+  const handlePhysicsInput = (symbol: string) => {
+    if (isNewInput) {
+      setDisplayValue(symbol);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + symbol);
+    }
+  };
+
   // Keyboard support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -578,7 +785,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   return (
     <div className={cn(
       "p-6 rounded-3xl glass-morphism calc-shadow",
-      calculusMode || chemistryMode ? "w-full max-w-5xl" : "w-full max-w-md", 
+      calculusMode || chemistryMode || showCanvas ? "w-full max-w-5xl" : "w-full max-w-md", 
       "mx-auto animate-fade-in transition-all",
       className
     )}>
@@ -608,9 +815,16 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         />
       )}
       
+      {showCanvas && (
+        <CanvasCalculator 
+          onCalculation={handleCanvasCalculation}
+          className="mt-4" 
+        />
+      )}
+      
       <div className={cn(
         "grid gap-3 mt-4",
-        calculusMode || chemistryMode ? "grid-cols-10" : "grid-cols-4"
+        calculusMode || chemistryMode || redoxMode ? "grid-cols-10" : "grid-cols-4"
       )}>
         {/* Mode Selection Buttons */}
         <Button 
@@ -629,6 +843,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
           value={physicsMode ? "Basic" : "Physics"} 
           onClick={togglePhysicsMode} 
           variant={physicsMode ? "equal" : "function"} 
+        />
+        
+        <Button 
+          value={showCanvas ? "Hide Canvas" : "Canvas"} 
+          onClick={toggleCanvasMode} 
+          variant={showCanvas ? "equal" : "function"} 
         />
         
         {/* Common buttons in all modes */}
@@ -738,53 +958,109 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
           </>
         ) : chemistryMode ? (
-          // Chemistry Mode Buttons - Expanded version
-          <>
-            {/* Chemistry operation buttons */}
-            <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="function" />
-            <Button value="Stoichiometry" onClick={() => handleChemistryOperation('stoichiometry')} variant="function" />
-            <Button value="⌫" onClick={handleBackspace} variant="function" />
-            <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
-            <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
-            <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
-            
-            {/* New exponent and subscription buttons */}
-            <Button value="₁" onClick={() => handleSubscriptInput(1)} variant="function" />
-            <Button value="₂" onClick={() => handleSubscriptInput(2)} variant="function" />
-            <Button value="₃" onClick={() => handleSubscriptInput(3)} variant="function" />
-            <Button value="₄" onClick={() => handleSubscriptInput(4)} variant="function" />
+          redoxMode ? (
+            // Redox Mode Buttons
+            <>
+              <Button value="⌫" onClick={handleBackspace} variant="function" />
+              <Button value="e⁻" onClick={() => handleRedoxNotation('e-')} variant="redox" />
+              <Button value="Back" onClick={toggleRedoxMode} variant="function" />
+              <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
+              <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
+              <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
+              
+              {/* Oxidation states */}
+              <Button value="+1" onClick={() => handleRedoxNotation('oxidation-1')} variant="redox" />
+              <Button value="+2" onClick={() => handleRedoxNotation('oxidation-2')} variant="redox" />
+              <Button value="+3" onClick={() => handleRedoxNotation('oxidation-3')} variant="redox" />
+              <Button value="+4" onClick={() => handleRedoxNotation('oxidation-4')} variant="redox" />
+              <Button value="+5" onClick={() => handleRedoxNotation('oxidation-5')} variant="redox" />
+              <Button value="+6" onClick={() => handleRedoxNotation('oxidation-6')} variant="redox" />
+              <Button value="+7" onClick={() => handleRedoxNotation('oxidation-7')} variant="redox" />
+              <Button value="+8" onClick={() => handleRedoxNotation('oxidation-8')} variant="redox" />
+              
+              {/* Reduction states */}
+              <Button value="-1" onClick={() => handleRedoxNotation('reduction-1')} variant="redox" />
+              <Button value="-2" onClick={() => handleRedoxNotation('reduction-2')} variant="redox" />
+              <Button value="-3" onClick={() => handleRedoxNotation('reduction-3')} variant="redox" />
+              <Button value="-4" onClick={() => handleRedoxNotation('reduction-4')} variant="redox" />
+              
+              {/* Custom exponent */}
+              <Button value="x^n" onClick={handleExponentInput} variant="function" />
+              
+              {/* Chemical elements for redox reactions */}
+              {["Fe", "Mn", "Cr", "Cu", "Zn", "Ag", "Au", "Pb", "O", "H", "C", "N", "S", "P", "Cl", "Br", "I"].map(element => (
+                <Button 
+                  key={element} 
+                  value={element} 
+                  onClick={() => handleChemicalInput(element)} 
+                  variant="number"
+                />
+              ))}
+              
+              {/* Numbers for coefficients */}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(num => (
+                <Button 
+                  key={num} 
+                  value={num.toString()} 
+                  onClick={() => handleNumberInput(num.toString())} 
+                />
+              ))}
+              
+              <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
+              <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
+              <Button value="." onClick={() => handleNumberInput('.')} />
+              <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
+            </>
+          ) : (
+            // Chemistry Mode Buttons - Expanded version
+            <>
+              {/* Chemistry operation buttons */}
+              <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="function" />
+              <Button value="Stoichiometry" onClick={() => handleChemistryOperation('stoichiometry')} variant="function" />
+              <Button value="Redox" onClick={toggleRedoxMode} variant="redox" />
+              <Button value="⌫" onClick={handleBackspace} variant="function" />
+              <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
+              <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
+              <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
+              <Button value="x^n" onClick={handleExponentInput} variant="function" />
+              
+              {/* Subscripts and superscripts */}
+              <Button value="₁" onClick={() => handleSubscriptInput(1)} variant="function" />
+              <Button value="₂" onClick={() => handleSubscriptInput(2)} variant="function" />
+              <Button value="₃" onClick={() => handleSubscriptInput(3)} variant="function" />
+              <Button value="₄" onClick={() => handleSubscriptInput(4)} variant="function" />
 
-            {/* Charge indicators (superscripts) */}
-            <Button value="⁺" onClick={() => handleSuperscriptInput('+')} variant="function" />
-            <Button value="⁻" onClick={() => handleSuperscriptInput('-')} variant="function" />
-            <Button value="²⁺" onClick={() => { handleSubscriptInput(2); handleSuperscriptInput('+'); }} variant="function" />
-            <Button value="³⁺" onClick={() => { handleSubscriptInput(3); handleSuperscriptInput('+'); }} variant="function" />
-
-            {/* Chemical elements - Display in a grid */}
-            {elementGroups.flat().map((element, index) => (
-              <Button 
-                key={index} 
-                value={element} 
-                onClick={() => handleChemicalInput(element)} 
-                variant="number"
-              />
-            ))}
-
-            {/* Numbers for coefficients and subscripts */}
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((num) => (
-              <Button 
-                key={num} 
-                value={num.toString()} 
-                onClick={() => handleNumberInput(num.toString())} 
-              />
-            ))}
-
-            {/* Parentheses and other symbols */}
-            <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
-            <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
-            <Button value="." onClick={() => handleNumberInput('.')} />
-            <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
-          </>
+              {/* Charge indicators (superscripts) */}
+              <Button value="⁺" onClick={() => handleSuperscriptInput('+')} variant="function" />
+              <Button value="⁻" onClick={() => handleSuperscriptInput('-')} variant="function" />
+              <Button value="²⁺" onClick={() => { handleSubscriptInput(2); handleSuperscriptInput('+'); }} variant="function" />
+              <Button value="³⁺" onClick={() => { handleSubscriptInput(3); handleSuperscriptInput('+'); }} variant="function" />
+              
+              {/* Chemical elements for redox reactions */}
+              {["Fe", "Mn", "Cr", "Cu", "Zn", "Ag", "Au", "Pb", "O", "H", "C", "N", "S", "P", "Cl", "Br", "I"].map(element => (
+                <Button 
+                  key={element} 
+                  value={element} 
+                  onClick={() => handleChemicalInput(element)} 
+                  variant="number"
+                />
+              ))}
+              
+              {/* Numbers for coefficients */}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(num => (
+                <Button 
+                  key={num} 
+                  value={num.toString()} 
+                  onClick={() => handleNumberInput(num.toString())} 
+                />
+              ))}
+              
+              <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
+              <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
+              <Button value="." onClick={() => handleNumberInput('.')} />
+              <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
+            </>
+          )
         ) : calculusMode ? (
           // Calculus Mode Buttons - Expanded with more functions
           <>
@@ -880,6 +1156,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             
             {/* Scientific functions */}
             <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
+            <Button value="x^n" onClick={() => handleFunction('pow_n')} variant="function" />
           </>
         )}
       </div>

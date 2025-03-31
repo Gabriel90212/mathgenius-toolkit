@@ -7,7 +7,8 @@ type ButtonVariant =
   | "operator" 
   | "function" 
   | "equal" 
-  | "memory";
+  | "memory"
+  | "redox";
 
 interface ButtonProps {
   value: string;
@@ -30,10 +31,11 @@ const Button: React.FC<ButtonProps> = ({
   
   const variantClasses = {
     number: "bg-calculator-button-number text-foreground hover:bg-opacity-80",
-    operator: "bg-calculator-button-operator text-primary hover:bg-opacity-80 font-semibold",
+    operator: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-semibold",
     function: "bg-calculator-button-function text-primary hover:bg-opacity-80",
     equal: "bg-calculator-button-equal text-white hover:bg-opacity-90 font-semibold",
     memory: "bg-calculator-button-memory text-primary hover:bg-opacity-80",
+    redox: "bg-calculator-button-redox text-primary-foreground hover:bg-opacity-80 font-semibold"
   };
 
   const handleClick = () => {

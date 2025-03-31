@@ -42,6 +42,7 @@
     --calculator-button-function: 211 95% 90%;
     --calculator-button-equal: 210 100% 50%;
     --calculator-button-memory: 210 80% 88%;
+    --calculator-button-redox: 25 90% 55%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -89,6 +90,7 @@
     --calculator-button-function: 211 80% 30%;
     --calculator-button-equal: 210 100% 50%;
     --calculator-button-memory: 210 70% 35%;
+    --calculator-button-redox: 25 80% 45%;
   }
 }
 
@@ -119,5 +121,19 @@
   .calc-shadow {
     box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1),
                 0 5px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  .canvas-container {
+    touch-action: none;
+  }
+  
+  @keyframes pulse-recognition {
+    0% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(29, 78, 216, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(29, 78, 216, 0); }
+  }
+  
+  .pulse-animation {
+    animation: pulse-recognition 2s infinite;
   }
 }

@@ -9,26 +9,34 @@ interface DisplayProps {
 }
 
 const Display: React.FC<DisplayProps> = ({ value, expression, className }) => {
-  // Function to format chemical formulas with proper subscripts for display
+  // Function to format chemical formulas with proper subscripts and superscripts for display
   const formatChemicalFormula = (text: string): React.ReactNode => {
-    // Check if it's a multiple integral expression
+    // Check for various special cases
     if (text.startsWith('∫∫') || text.startsWith('∫∫∫')) {
       return formatMultipleIntegrals(text);
     }
     
-    // This regex matches element symbols and their subscripts
-    const parts = text.split(/([A-Z][a-z]?)(\d*)/g).filter(Boolean);
+    if (text.includes('^')) {
+      return formatExponents(text);
+    }
+    
+    // This regex matches element symbols, their subscripts, and superscripts
+    const parts = text.split(/([A-Z][a-z]?)(\d*)([\+\-\d]*)/g).filter(Boolean);
     
     return parts.map((part, index) => {
-      // If the part is a number and follows an element symbol
+      // If the part is a number and follows an element symbol (subscript)
       if (/^\d+$/.test(part) && index > 0 && /^[A-Z][a-z]?$/.test(parts[index - 1])) {
         return <sub key={index}>{part}</sub>;
+      }
+      // If the part starts with + or - and follows an element symbol (oxidation state)
+      else if (/^[\+\-]\d*$/.test(part) && index > 0) {
+        return <sup key={index}>{part}</sup>;
       }
       return part;
     });
   };
 
-  // New function to format multiple integrals
+  // Format multiple integrals
   const formatMultipleIntegrals = (text: string): React.ReactNode => {
     // Identify the type of integral
     const isDoubleIntegral = text.startsWith('∫∫');
@@ -44,6 +52,42 @@ const Display: React.FC<DisplayProps> = ({ value, expression, className }) => {
         <span>{expressionPart}</span>
       </span>
     );
+  };
+  
+  // New function to format expressions with exponents
+  const formatExponents = (text: string): React.ReactNode => {
+    const parts = text.split(/\^/);
+    if (parts.length === 1) return text;
+    
+    const result: React.ReactNode[] = [parts[0]];
+    
+    for (let i = 1; i < parts.length; i++) {
+      // Check if the exponent part is enclosed in parentheses
+      let exponent = parts[i];
+      let remainder = '';
+      
+      if (exponent.startsWith('(')) {
+        // Find the closing parenthesis
+        const closingIndex = exponent.indexOf(')');
+        if (closingIndex !== -1) {
+          remainder = exponent.substring(closingIndex + 1);
+          exponent = exponent.substring(1, closingIndex);
+        }
+      } else {
+        // No parentheses, just take the first character as exponent
+        if (exponent.length > 1) {
+          remainder = exponent.substring(1);
+          exponent = exponent.substring(0, 1);
+        }
+      }
+      
+      result.push(<sup key={`exp-${i}`}>{exponent}</sup>);
+      if (remainder) {
+        result.push(remainder);
+      }
+    }
+    
+    return <span>{result}</span>;
   };
 
   return (
