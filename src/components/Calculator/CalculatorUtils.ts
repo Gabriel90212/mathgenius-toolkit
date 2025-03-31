@@ -1,3 +1,4 @@
+
 // Constants for mathematical operations
 export const OPERATIONS = {
   ADD: '+',
@@ -92,9 +93,9 @@ export const parseExpression = (expression: string): string => {
 };
 
 // Types for calculus operations
-export type Variable = 'x' | 'y' | 't';
+export type Variable = 'x' | 'y' | 't' | 'z';
 export type Expression = string;
-export type CalculusOperation = 'derivative' | 'integral';
+export type CalculusOperation = 'derivative' | 'integral' | 'double-integral' | 'triple-integral';
 export type ChemistryOperation = 'balance' | 'stoichiometry';
 export type PhysicsOperation = 'kinematics' | 'dynamics' | 'circuits' | 'laplace';
 
