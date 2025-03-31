@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -839,3 +840,183 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="+1" onClick={() => handleRedoxNotation('oxidation-1')} variant="redox" />
               <Button value="+2" onClick={() => handleRedoxNotation('oxidation-2')} variant="redox" />
               <Button value="+3" onClick={() => handleRedoxNotation('oxidation-3')} variant="redox" />
+              <Button value="+4" onClick={() => handleRedoxNotation('oxidation-4')} variant="redox" />
+              <Button value="+5" onClick={() => handleRedoxNotation('oxidation-5')} variant="redox" />
+              <Button value="+6" onClick={() => handleRedoxNotation('oxidation-6')} variant="redox" />
+              <Button value="+7" onClick={() => handleRedoxNotation('oxidation-7')} variant="redox" />
+              <Button value="+8" onClick={() => handleRedoxNotation('oxidation-8')} variant="redox" />
+
+              {/* Reduction states */}
+              <Button value="-1" onClick={() => handleRedoxNotation('reduction-1')} variant="redox" />
+              <Button value="-2" onClick={() => handleRedoxNotation('reduction-2')} variant="redox" />
+              <Button value="-3" onClick={() => handleRedoxNotation('reduction-3')} variant="redox" />
+              <Button value="-4" onClick={() => handleRedoxNotation('reduction-4')} variant="redox" />
+              
+              {/* Common elements */}
+              {getCommonElements().map(element => (
+                <Button 
+                  key={element} 
+                  value={element} 
+                  onClick={() => handleChemicalInput(element)} 
+                  variant="number" 
+                />
+              ))}
+
+              {/* Numerical subscripts */}
+              {[1, 2, 3, 4].map(num => (
+                <Button 
+                  key={`sub-${num}`} 
+                  value={`${num}`} 
+                  onClick={() => handleSubscriptInput(num)} 
+                  variant="function" 
+                />
+              ))}
+            </>
+          ) : (
+            // Regular Chemistry Mode Buttons
+            <>
+              <Button value="⌫" onClick={handleBackspace} variant="function" />
+              <Button value="CE" onClick={clearDisplay} variant="function" />
+              <Button value="%" onClick={handlePercentage} variant="function" />
+              <Button value="^" onClick={handleExponentInput} variant="operator" />
+              
+              <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
+              <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
+              <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
+              <Button value="⇌" onClick={() => handleChemicalInput('⇌')} variant="operator" />
+              
+              <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
+              <Button value="=" onClick={handleEquals} variant="equal" />
+              <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
+              <Button value="Redox" onClick={toggleRedoxMode} variant="redox" />
+              
+              {/* Common elements */}
+              {getCommonElements().map(element => (
+                <Button 
+                  key={element} 
+                  value={element} 
+                  onClick={() => handleChemicalInput(element)} 
+                  variant="number" 
+                />
+              ))}
+              
+              {/* Numerical subscripts */}
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                <Button 
+                  key={`sub-${num}`} 
+                  value={`${num}`} 
+                  onClick={() => handleSubscriptInput(num)} 
+                  variant="function" 
+                />
+              ))}
+              
+              {/* Operation buttons */}
+              <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="equal" wide />
+              <Button value="Stoich." onClick={() => handleChemistryOperation('stoichiometry')} variant="equal" wide />
+            </>
+          )
+        ) : calculusMode ? (
+          // Calculus Mode Buttons
+          <>
+            <Button value="⌫" onClick={handleBackspace} variant="function" />
+            <Button value="CE" onClick={clearDisplay} variant="function" />
+            <Button value="%" onClick={handlePercentage} variant="function" />
+            <Button value="^" onClick={handleExponentInput} variant="operator" />
+            
+            <Button value="var" onClick={toggleVariable} variant="function" />
+            <Button value="(" onClick={() => handleVariableInput('(')} variant="function" />
+            <Button value=")" onClick={() => handleVariableInput(')')} variant="function" />
+            <Button value="√" onClick={() => handleFunction('sqrt')} variant="function" />
+            
+            <Button value="x" onClick={() => handleVariableInput('x')} variant="number" />
+            <Button value="y" onClick={() => handleVariableInput('y')} variant="number" />
+            <Button value="sin" onClick={() => handleVariableInput('sin(')} variant="function" />
+            <Button value="cos" onClick={() => handleVariableInput('cos(')} variant="function" />
+            
+            <Button value="7" onClick={() => handleNumberInput('7')} />
+            <Button value="8" onClick={() => handleNumberInput('8')} />
+            <Button value="9" onClick={() => handleNumberInput('9')} />
+            <Button value="÷" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+            
+            <Button value="4" onClick={() => handleNumberInput('4')} />
+            <Button value="5" onClick={() => handleNumberInput('5')} />
+            <Button value="6" onClick={() => handleNumberInput('6')} />
+            <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+            
+            <Button value="1" onClick={() => handleNumberInput('1')} />
+            <Button value="2" onClick={() => handleNumberInput('2')} />
+            <Button value="3" onClick={() => handleNumberInput('3')} />
+            <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+            
+            <Button value="0" onClick={() => handleNumberInput('0')} />
+            <Button value="." onClick={() => handleNumberInput('.')} />
+            <Button value="=" onClick={handleEquals} variant="equal" />
+            <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+            
+            <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
+            <Button value="x³" onClick={() => handleVariableInput('x^3')} variant="function" />
+            <Button value="e^x" onClick={() => handleVariableInput('e^')} variant="function" />
+            <Button value="ln" onClick={() => handleVariableInput('ln(')} variant="function" />
+            
+            <Button value="d/dx" onClick={() => handleCalculusOperation('derivative')} variant="equal" />
+            <Button value="∫" onClick={() => handleCalculusOperation('integral')} variant="equal" />
+            <Button value="∫∫" onClick={() => handleCalculusOperation('double-integral')} variant="equal" />
+            <Button value="∫∫∫" onClick={() => handleCalculusOperation('triple-integral')} variant="equal" />
+          </>
+        ) : (
+          // Default Calculator Mode
+          <>
+            <Button value="⌫" onClick={handleBackspace} variant="function" />
+            <Button value="CE" onClick={clearDisplay} variant="function" />
+            <Button value="%" onClick={handlePercentage} variant="function" />
+            
+            <Button value="MC" onClick={() => handleMemory("MC")} variant="memory" />
+            <Button value="MR" onClick={() => handleMemory("MR")} variant="memory" />
+            <Button value="M+" onClick={() => handleMemory("M+")} variant="memory" />
+            <Button value="M-" onClick={() => handleMemory("M-")} variant="memory" />
+            
+            <Button value="7" onClick={() => handleNumberInput('7')} />
+            <Button value="8" onClick={() => handleNumberInput('8')} />
+            <Button value="9" onClick={() => handleNumberInput('9')} />
+            <Button value="÷" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+            
+            <Button value="4" onClick={() => handleNumberInput('4')} />
+            <Button value="5" onClick={() => handleNumberInput('5')} />
+            <Button value="6" onClick={() => handleNumberInput('6')} />
+            <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+            
+            <Button value="1" onClick={() => handleNumberInput('1')} />
+            <Button value="2" onClick={() => handleNumberInput('2')} />
+            <Button value="3" onClick={() => handleNumberInput('3')} />
+            <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+            
+            <Button value="0" onClick={() => handleNumberInput('0')} />
+            <Button value="." onClick={() => handleNumberInput('.')} />
+            <Button value="=" onClick={handleEquals} variant="equal" />
+            <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+            
+            {shiftMode ? (
+              // Inverse functions
+              <>
+                <Button value="x^n" onClick={() => handleFunction('pow_n')} variant="function" />
+                <Button value="√" onClick={() => handleFunction('sqrt')} variant="function" />
+                <Button value="log" onClick={() => handleFunction('log10')} variant="function" />
+                <Button value="ln" onClick={() => handleFunction('ln')} variant="function" />
+              </>
+            ) : (
+              // Regular functions
+              <>
+                <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
+                <Button value="1/x" onClick={() => handleFunction('reciprocal')} variant="function" />
+                <Button value="±" onClick={handlePlusMinus} variant="function" />
+                <Button value="Shift" onClick={toggleShiftMode} variant="function" />
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Calculator;
