@@ -35,12 +35,13 @@
 
     --radius: 1rem;
 
+    /* Updated calculator colors for better organization */
     --calculator-display: 210 40% 98%;
     --calculator-button-number: 220 14% 96%;
-    --calculator-button-operator: 210 100% 97%;
-    --calculator-button-function: 211 100% 95%;
+    --calculator-button-operator: 210 90% 55%;
+    --calculator-button-function: 211 95% 90%;
     --calculator-button-equal: 210 100% 50%;
-    --calculator-button-memory: 210 50% 93%;
+    --calculator-button-memory: 210 80% 88%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -81,12 +82,13 @@
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
 
+    /* Updated calculator colors for dark mode */
     --calculator-display: 240 10% 20%;
     --calculator-button-number: 240 5% 25%;
-    --calculator-button-operator: 240 5% 30%;
-    --calculator-button-function: 240 5% 32%;
+    --calculator-button-operator: 210 80% 45%;
+    --calculator-button-function: 211 80% 30%;
     --calculator-button-equal: 210 100% 50%;
-    --calculator-button-memory: 210 40% 25%;
+    --calculator-button-memory: 210 70% 35%;
   }
 }
 

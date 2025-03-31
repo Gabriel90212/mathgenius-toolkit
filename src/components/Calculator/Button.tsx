@@ -54,6 +54,7 @@ const Button: React.FC<ButtonProps> = ({
       )}
       onClick={handleClick}
       disabled={disabled}
+      aria-label={`Calculator ${variant} button: ${value}`}
     >
       {value}
     </button>
