@@ -21,11 +21,13 @@ const Index = () => {
           <p>
             Switch between <strong>Basic</strong>, <strong>Calculus</strong>, <strong>Chemistry</strong>, and <strong>Physics</strong> modes for different calculations.
             <br />
+            <strong>NEW:</strong> Interactive Physics formulas with step-by-step solvers for Mechanics, Thermodynamics, Waves, Electromagnetism, and Modern Physics.
+            <br />
             <strong>Chemistry Mode:</strong> Balance chemical equations and calculate stoichiometry with support for all 118 elements in the periodic table.
             <br />
             <strong>Calculus Mode:</strong> Compute derivatives and integrals with variables.
             <br />
-            <strong>Physics Mode:</strong> Solve problems in kinematics, dynamics, circuit analysis (Kirchhoff's laws), and Laplace transforms.
+            <strong>Physics Mode:</strong> Solve problems with formulas, canvas drawing, and step-by-step solutions across multiple physics disciplines.
             <br />
             Keyboard shortcuts available: Numbers, operators, Enter (=), Escape (clear), Backspace.
           </p>
