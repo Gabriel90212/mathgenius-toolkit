@@ -34,7 +34,7 @@ interface PhysicsTopic {
 // Define physics topics with their formulas
 const physicsTopics: PhysicsTopic[] = [
   {
-    id: 'mechanics',
+    id: 'classical-mechanics',
     name: 'Classical Mechanics',
     icon: Calculator,
     formulas: [
@@ -106,6 +106,53 @@ const physicsTopics: PhysicsTopic[] = [
               `Start with the equation: F = ma`,
               `Substitute values: F = ${values.m} × ${values.a}`,
               `Calculate: F = ${result} N`
+            ]
+          };
+        }
+      },
+      {
+        id: 'momentum',
+        name: 'Linear Momentum',
+        equation: 'p = mv',
+        variables: [
+          { symbol: 'p', name: 'Momentum', unit: 'kg·m/s' },
+          { symbol: 'm', name: 'Mass', unit: 'kg' },
+          { symbol: 'v', name: 'Velocity', unit: 'm/s' }
+        ],
+        description: 'Calculates the linear momentum of an object',
+        calculateResult: (values) => {
+          const result = values.m * values.v;
+          return {
+            result,
+            unit: 'kg·m/s',
+            steps: [
+              `Start with the equation: p = mv`,
+              `Substitute values: p = ${values.m} × ${values.v}`,
+              `Calculate: p = ${result} kg·m/s`
+            ]
+          };
+        }
+      },
+      {
+        id: 'kinetic-energy',
+        name: 'Kinetic Energy',
+        equation: 'KE = ½mv²',
+        variables: [
+          { symbol: 'KE', name: 'Kinetic energy', unit: 'J' },
+          { symbol: 'm', name: 'Mass', unit: 'kg' },
+          { symbol: 'v', name: 'Velocity', unit: 'm/s' }
+        ],
+        description: 'Calculates the kinetic energy of a moving object',
+        calculateResult: (values) => {
+          const result = 0.5 * values.m * Math.pow(values.v, 2);
+          return {
+            result,
+            unit: 'J',
+            steps: [
+              `Start with the equation: KE = ½mv²`,
+              `Substitute values: KE = 0.5 × ${values.m} × (${values.v})²`,
+              `Calculate: KE = 0.5 × ${values.m} × ${Math.pow(values.v, 2)}`,
+              `KE = ${result} J`
             ]
           };
         }
@@ -217,11 +264,57 @@ const physicsTopics: PhysicsTopic[] = [
             ]
           };
         }
+      },
+      {
+        id: 'first-law',
+        name: 'First Law of Thermodynamics',
+        equation: 'ΔU = Q - W',
+        variables: [
+          { symbol: 'ΔU', name: 'Change in internal energy', unit: 'J' },
+          { symbol: 'Q', name: 'Heat added to system', unit: 'J' },
+          { symbol: 'W', name: 'Work done by system', unit: 'J' }
+        ],
+        description: 'Relates the change in internal energy to heat and work',
+        calculateResult: (values) => {
+          const result = values.Q - values.W;
+          return {
+            result,
+            unit: 'J',
+            steps: [
+              `Start with the equation: ΔU = Q - W`,
+              `Substitute values: ΔU = ${values.Q} - ${values.W}`,
+              `Calculate: ΔU = ${result} J`
+            ]
+          };
+        }
+      },
+      {
+        id: 'entropy-change',
+        name: 'Entropy Change',
+        equation: 'ΔS = Q/T',
+        variables: [
+          { symbol: 'ΔS', name: 'Change in entropy', unit: 'J/K' },
+          { symbol: 'Q', name: 'Heat transferred', unit: 'J' },
+          { symbol: 'T', name: 'Absolute temperature', unit: 'K' }
+        ],
+        description: 'Calculates the change in entropy for a reversible process',
+        calculateResult: (values) => {
+          const result = values.Q / values.T;
+          return {
+            result,
+            unit: 'J/K',
+            steps: [
+              `Start with the equation: ΔS = Q/T`,
+              `Substitute values: ΔS = ${values.Q} / ${values.T}`,
+              `Calculate: ΔS = ${result} J/K`
+            ]
+          };
+        }
       }
     ]
   },
   {
-    id: 'waves',
+    id: 'waves-optics',
     name: 'Waves and Optics',
     icon: Waves,
     formulas: [
@@ -321,6 +414,61 @@ const physicsTopics: PhysicsTopic[] = [
                 `Rearrange to find θ₂: θ₂ = sin⁻¹((n₁/n₂)sin(θ₁))`,
                 `Substitute values: θ₂ = sin⁻¹((${values['n₁']}/${values['n₂']}) × sin(${values['θ₁']}°))`,
                 `Calculate: θ₂ = ${result.toFixed(2)}°`
+              ]
+            };
+          }
+        }
+      },
+      {
+        id: 'thin-lens',
+        name: 'Thin Lens Equation',
+        equation: '1/f = 1/d₀ + 1/d᷎',
+        variables: [
+          { symbol: 'f', name: 'Focal length', unit: 'm' },
+          { symbol: 'd₀', name: 'Object distance', unit: 'm' },
+          { symbol: 'd᷎', name: 'Image distance', unit: 'm' }
+        ],
+        description: 'Relates the focal length of a lens to object and image distances',
+        calculateResult: (values) => {
+          if (!values.f && values['d₀'] && values['d᷎']) {
+            const result = 1 / (1/values['d₀'] + 1/values['d᷎']);
+            return {
+              result,
+              unit: 'm',
+              steps: [
+                `Start with the equation: 1/f = 1/d₀ + 1/d᷎`,
+                `Rearrange to find f: f = 1/(1/d₀ + 1/d᷎)`,
+                `Substitute values: f = 1/(1/${values['d₀']} + 1/${values['d᷎']})`,
+                `Calculate: f = 1/(${1/values['d₀'] + 1/values['d᷎']})`,
+                `f = ${result} m`
+              ]
+            };
+          } else if (values.f && !values['d₀'] && values['d᷎']) {
+            const result = 1 / (1/values.f - 1/values['d᷎']);
+            return {
+              result,
+              unit: 'm',
+              steps: [
+                `Start with the equation: 1/f = 1/d₀ + 1/d᷎`,
+                `Rearrange to find d₀: 1/d₀ = 1/f - 1/d᷎`,
+                `d₀ = 1/(1/f - 1/d᷎)`,
+                `Substitute values: d₀ = 1/(1/${values.f} - 1/${values['d᷎']})`,
+                `Calculate: d₀ = 1/(${1/values.f - 1/values['d᷎']})`,
+                `d₀ = ${result} m`
+              ]
+            };
+          } else {
+            const result = 1 / (1/values.f - 1/values['d₀']);
+            return {
+              result,
+              unit: 'm',
+              steps: [
+                `Start with the equation: 1/f = 1/d₀ + 1/d᷎`,
+                `Rearrange to find d᷎: 1/d᷎ = 1/f - 1/d₀`,
+                `d᷎ = 1/(1/f - 1/d₀)`,
+                `Substitute values: d᷎ = 1/(1/${values.f} - 1/${values['d₀']})`,
+                `Calculate: d᷎ = 1/(${1/values.f - 1/values['d₀']})`,
+                `d᷎ = ${result} m`
               ]
             };
           }
@@ -430,6 +578,59 @@ const physicsTopics: PhysicsTopic[] = [
             };
           }
         }
+      },
+      {
+        id: 'coulombs-law',
+        name: 'Coulomb\'s Law',
+        equation: 'F = k(q₁q₂/r²)',
+        variables: [
+          { symbol: 'F', name: 'Electric force', unit: 'N' },
+          { symbol: 'k', name: 'Coulomb constant', unit: 'N·m²/C²', defaultValue: 8.9875e9 },
+          { symbol: 'q₁', name: 'Charge 1', unit: 'C' },
+          { symbol: 'q₂', name: 'Charge 2', unit: 'C' },
+          { symbol: 'r', name: 'Distance', unit: 'm' }
+        ],
+        description: 'Calculates the electrostatic force between two charges',
+        calculateResult: (values) => {
+          const result = values.k * (values['q₁'] * values['q₂']) / Math.pow(values.r, 2);
+          return {
+            result,
+            unit: 'N',
+            steps: [
+              `Start with the equation: F = k(q₁q₂/r²)`,
+              `Substitute values: F = ${values.k} × (${values['q₁']} × ${values['q₂']} / ${values.r}²)`,
+              `Calculate: F = ${values.k} × (${values['q₁'] * values['q₂']} / ${Math.pow(values.r, 2)})`,
+              `F = ${result} N`
+            ]
+          };
+        }
+      },
+      {
+        id: 'magnetic-force',
+        name: 'Magnetic Force on Moving Charge',
+        equation: 'F = qvBsin(θ)',
+        variables: [
+          { symbol: 'F', name: 'Magnetic force', unit: 'N' },
+          { symbol: 'q', name: 'Charge', unit: 'C' },
+          { symbol: 'v', name: 'Velocity', unit: 'm/s' },
+          { symbol: 'B', name: 'Magnetic field', unit: 'T' },
+          { symbol: 'θ', name: 'Angle', unit: '°' }
+        ],
+        description: 'Calculates the magnetic force on a moving charge',
+        calculateResult: (values) => {
+          const thetaRad = values['θ'] * Math.PI / 180;
+          const result = Math.abs(values.q) * values.v * values.B * Math.sin(thetaRad);
+          return {
+            result,
+            unit: 'N',
+            steps: [
+              `Start with the equation: F = qvBsin(θ)`,
+              `Substitute values: F = ${values.q} × ${values.v} × ${values.B} × sin(${values['θ']}°)`,
+              `Calculate: F = ${values.q} × ${values.v} × ${values.B} × ${Math.sin(thetaRad).toFixed(4)}`,
+              `F = ${result} N`
+            ]
+          };
+        }
       }
     ]
   },
@@ -533,6 +734,400 @@ const physicsTopics: PhysicsTopic[] = [
                 `Rearrange to find p: p = h/λ`,
                 `Substitute values: p = ${values.h} / ${values['λ']}`,
                 `Calculate: p = ${result} kg·m/s`
+              ]
+            };
+          }
+        }
+      },
+      {
+        id: 'photoelectric-effect',
+        name: 'Photoelectric Effect',
+        equation: 'KE = hf - Φ',
+        variables: [
+          { symbol: 'KE', name: 'Kinetic energy', unit: 'eV' },
+          { symbol: 'h', name: 'Planck\'s constant', unit: 'eV·s', defaultValue: 4.136e-15 },
+          { symbol: 'f', name: 'Frequency', unit: 'Hz' },
+          { symbol: 'Φ', name: 'Work function', unit: 'eV' }
+        ],
+        description: 'Calculates the kinetic energy of photoelectrons',
+        calculateResult: (values) => {
+          const result = values.h * values.f - values['Φ'];
+          return {
+            result,
+            unit: 'eV',
+            steps: [
+              `Start with the equation: KE = hf - Φ`,
+              `Substitute values: KE = ${values.h} × ${values.f} - ${values['Φ']}`,
+              `Calculate: KE = ${values.h * values.f} - ${values['Φ']}`,
+              `KE = ${result} eV`
+            ]
+          };
+        }
+      }
+    ]
+  },
+  {
+    id: 'quantum-mechanics',
+    name: 'Quantum Mechanics',
+    icon: Circle,
+    formulas: [
+      {
+        id: 'uncertainty-principle',
+        name: 'Heisenberg Uncertainty Principle',
+        equation: 'ΔxΔp ≥ ħ/2',
+        variables: [
+          { symbol: 'Δx', name: 'Position uncertainty', unit: 'm' },
+          { symbol: 'Δp', name: 'Momentum uncertainty', unit: 'kg·m/s' },
+          { symbol: 'ħ', name: 'Reduced Planck constant', unit: 'J·s', defaultValue: 1.0545718e-34 }
+        ],
+        description: 'Describes the fundamental limit on precision of complementary variables',
+        calculateResult: (values) => {
+          if (!values['Δx'] && values['Δp'] && values['ħ']) {
+            const result = values['ħ'] / (2 * values['Δp']);
+            return {
+              result,
+              unit: 'm',
+              steps: [
+                `Start with the equation: ΔxΔp ≥ ħ/2`,
+                `Rearrange to find Δx: Δx ≥ ħ/(2·Δp)`,
+                `Substitute values: Δx ≥ ${values['ħ']} / (2 × ${values['Δp']})`,
+                `Calculate: Δx ≥ ${result} m`
+              ]
+            };
+          } else {
+            const result = values['ħ'] / (2 * values['Δx']);
+            return {
+              result,
+              unit: 'kg·m/s',
+              steps: [
+                `Start with the equation: ΔxΔp ≥ ħ/2`,
+                `Rearrange to find Δp: Δp ≥ ħ/(2·Δx)`,
+                `Substitute values: Δp ≥ ${values['ħ']} / (2 × ${values['Δx']})`,
+                `Calculate: Δp ≥ ${result} kg·m/s`
+              ]
+            };
+          }
+        }
+      },
+      {
+        id: 'schrodinger',
+        name: 'Time-Independent Schrödinger Equation',
+        equation: 'ĤΨ = EΨ',
+        variables: [
+          { symbol: 'Ĥ', name: 'Hamiltonian operator', unit: 'J' },
+          { symbol: 'Ψ', name: 'Wave function', unit: '' },
+          { symbol: 'E', name: 'Energy eigenvalue', unit: 'J' }
+        ],
+        description: 'The fundamental equation of quantum mechanics',
+        calculateResult: (values) => {
+          // This is mostly for display since solving Schrödinger's equation is complex
+          return {
+            result: values.E,
+            unit: 'J',
+            steps: [
+              `The Schrödinger equation: ĤΨ = EΨ`,
+              `This equation typically requires solving differential equations for specific potentials`,
+              `For simple cases like a particle in a box: E_n = (n²π²ħ²)/(2mL²)`,
+              `For the hydrogen atom: E_n = -13.6 eV/n²`,
+              `Energy value: ${values.E} J`
+            ]
+          };
+        }
+      }
+    ]
+  },
+  {
+    id: 'astrophysics',
+    name: 'Astrophysics and Cosmology',
+    icon: Circle,
+    formulas: [
+      {
+        id: 'gravitational-force',
+        name: 'Newton\'s Law of Gravitation',
+        equation: 'F = G(m₁m₂/r²)',
+        variables: [
+          { symbol: 'F', name: 'Gravitational force', unit: 'N' },
+          { symbol: 'G', name: 'Gravitational constant', unit: 'N·m²/kg²', defaultValue: 6.67430e-11 },
+          { symbol: 'm₁', name: 'Mass 1', unit: 'kg' },
+          { symbol: 'm₂', name: 'Mass 2', unit: 'kg' },
+          { symbol: 'r', name: 'Distance', unit: 'm' }
+        ],
+        description: 'Calculates the gravitational force between two masses',
+        calculateResult: (values) => {
+          const result = values.G * (values['m₁'] * values['m₂']) / Math.pow(values.r, 2);
+          return {
+            result,
+            unit: 'N',
+            steps: [
+              `Start with the equation: F = G(m₁m₂/r²)`,
+              `Substitute values: F = ${values.G} × (${values['m₁']} × ${values['m₂']} / ${values.r}²)`,
+              `Calculate: F = ${values.G} × (${values['m₁'] * values['m₂']} / ${Math.pow(values.r, 2)})`,
+              `F = ${result} N`
+            ]
+          };
+        }
+      },
+      {
+        id: 'escape-velocity',
+        name: 'Escape Velocity',
+        equation: 'v_e = √(2GM/r)',
+        variables: [
+          { symbol: 'v_e', name: 'Escape velocity', unit: 'm/s' },
+          { symbol: 'G', name: 'Gravitational constant', unit: 'N·m²/kg²', defaultValue: 6.67430e-11 },
+          { symbol: 'M', name: 'Mass of celestial body', unit: 'kg' },
+          { symbol: 'r', name: 'Distance from center', unit: 'm' }
+        ],
+        description: 'Minimum velocity needed to escape a gravitational field',
+        calculateResult: (values) => {
+          const result = Math.sqrt(2 * values.G * values.M / values.r);
+          return {
+            result,
+            unit: 'm/s',
+            steps: [
+              `Start with the equation: v_e = √(2GM/r)`,
+              `Substitute values: v_e = √(2 × ${values.G} × ${values.M} / ${values.r})`,
+              `Calculate: v_e = √(${2 * values.G * values.M / values.r})`,
+              `v_e = ${result} m/s`
+            ]
+          };
+        }
+      },
+      {
+        id: 'hubbles-law',
+        name: 'Hubble\'s Law',
+        equation: 'v = H₀d',
+        variables: [
+          { symbol: 'v', name: 'Recessional velocity', unit: 'km/s' },
+          { symbol: 'H₀', name: 'Hubble constant', unit: 'km/s/Mpc', defaultValue: 70 },
+          { symbol: 'd', name: 'Distance', unit: 'Mpc' }
+        ],
+        description: 'Relates the velocity of a galaxy to its distance from Earth',
+        calculateResult: (values) => {
+          const result = values['H₀'] * values.d;
+          return {
+            result,
+            unit: 'km/s',
+            steps: [
+              `Start with the equation: v = H₀d`,
+              `Substitute values: v = ${values['H₀']} × ${values.d}`,
+              `Calculate: v = ${result} km/s`
+            ]
+          };
+        }
+      }
+    ]
+  },
+  {
+    id: 'mathematical-physics',
+    name: 'Mathematical Methods for Physics',
+    icon: FileText,
+    formulas: [
+      {
+        id: 'vector-dot-product',
+        name: 'Vector Dot Product',
+        equation: 'A·B = |A||B|cos(θ)',
+        variables: [
+          { symbol: 'A·B', name: 'Dot product', unit: 'varies' },
+          { symbol: '|A|', name: 'Magnitude of A', unit: 'varies' },
+          { symbol: '|B|', name: 'Magnitude of B', unit: 'varies' },
+          { symbol: 'θ', name: 'Angle between vectors', unit: '°' }
+        ],
+        description: 'Calculates the scalar product of two vectors',
+        calculateResult: (values) => {
+          const thetaRad = values['θ'] * Math.PI / 180;
+          const result = values['|A|'] * values['|B|'] * Math.cos(thetaRad);
+          return {
+            result,
+            unit: 'varies',
+            steps: [
+              `Start with the equation: A·B = |A||B|cos(θ)`,
+              `Substitute values: A·B = ${values['|A|']} × ${values['|B|']} × cos(${values['θ']}°)`,
+              `Calculate: A·B = ${values['|A|']} × ${values['|B|']} × ${Math.cos(thetaRad).toFixed(4)}`,
+              `A·B = ${result}`
+            ]
+          };
+        }
+      },
+      {
+        id: 'vector-cross-product',
+        name: 'Vector Cross Product Magnitude',
+        equation: '|A×B| = |A||B|sin(θ)',
+        variables: [
+          { symbol: '|A×B|', name: 'Cross product magnitude', unit: 'varies' },
+          { symbol: '|A|', name: 'Magnitude of A', unit: 'varies' },
+          { symbol: '|B|', name: 'Magnitude of B', unit: 'varies' },
+          { symbol: 'θ', name: 'Angle between vectors', unit: '°' }
+        ],
+        description: 'Calculates the magnitude of the cross product of two vectors',
+        calculateResult: (values) => {
+          const thetaRad = values['θ'] * Math.PI / 180;
+          const result = values['|A|'] * values['|B|'] * Math.sin(thetaRad);
+          return {
+            result,
+            unit: 'varies',
+            steps: [
+              `Start with the equation: |A×B| = |A||B|sin(θ)`,
+              `Substitute values: |A×B| = ${values['|A|']} × ${values['|B|']} × sin(${values['θ']}°)`,
+              `Calculate: |A×B| = ${values['|A|']} × ${values['|B|']} × ${Math.sin(thetaRad).toFixed(4)}`,
+              `|A×B| = ${result}`
+            ]
+          };
+        }
+      },
+      {
+        id: 'gradient-cartesian',
+        name: 'Gradient (Cartesian)',
+        equation: '∇f = (∂f/∂x)i + (∂f/∂y)j + (∂f/∂z)k',
+        variables: [
+          { symbol: '∂f/∂x', name: 'Partial derivative wrt x', unit: 'varies' },
+          { symbol: '∂f/∂y', name: 'Partial derivative wrt y', unit: 'varies' },
+          { symbol: '∂f/∂z', name: 'Partial derivative wrt z', unit: 'varies' }
+        ],
+        description: 'Calculates the gradient vector from partial derivatives',
+        calculateResult: (values) => {
+          return {
+            result: 0, // Just a placeholder
+            unit: 'varies',
+            steps: [
+              `The gradient is a vector: ∇f = (∂f/∂x)i + (∂f/∂y)j + (∂f/∂z)k`,
+              `Components: (${values['∂f/∂x']}, ${values['∂f/∂y']}, ${values['∂f/∂z']})`,
+              `For example, the gradient of f(x,y,z) = x²y + yz is (2xy, x² + z, y)`
+            ]
+          };
+        }
+      }
+    ]
+  },
+  {
+    id: 'nuclear-physics',
+    name: 'Nuclear Physics',
+    icon: FlaskConical,
+    formulas: [
+      {
+        id: 'binding-energy',
+        name: 'Nuclear Binding Energy',
+        equation: 'E_B = [Zm_p + (A-Z)m_n - m_N]c²',
+        variables: [
+          { symbol: 'E_B', name: 'Binding energy', unit: 'MeV' },
+          { symbol: 'Z', name: 'Atomic number', unit: '' },
+          { symbol: 'A', name: 'Mass number', unit: '' },
+          { symbol: 'm_p', name: 'Proton mass', unit: 'u', defaultValue: 1.007825 },
+          { symbol: 'm_n', name: 'Neutron mass', unit: 'u', defaultValue: 1.008665 },
+          { symbol: 'm_N', name: 'Nuclear mass', unit: 'u' }
+        ],
+        description: 'Calculates the binding energy of a nucleus',
+        calculateResult: (values) => {
+          // Convert to MeV using E=mc²
+          const c2 = 931.494; // MeV/u
+          const massDefect = values.Z * values.m_p + (values.A - values.Z) * values.m_n - values.m_N;
+          const result = massDefect * c2;
+          return {
+            result,
+            unit: 'MeV',
+            steps: [
+              `Start with the equation: E_B = [Zm_p + (A-Z)m_n - m_N]c²`,
+              `Substitute values: E_B = [${values.Z} × ${values.m_p} + (${values.A} - ${values.Z}) × ${values.m_n} - ${values.m_N}]c²`,
+              `Calculate mass defect: Δm = ${massDefect} u`,
+              `Convert to energy: E_B = ${massDefect} × ${c2} = ${result} MeV`
+            ]
+          };
+        }
+      },
+      {
+        id: 'radioactive-decay',
+        name: 'Radioactive Decay Law',
+        equation: 'N = N₀e^(-λt)',
+        variables: [
+          { symbol: 'N', name: 'Number of nuclei at time t', unit: '' },
+          { symbol: 'N₀', name: 'Initial number of nuclei', unit: '' },
+          { symbol: 'λ', name: 'Decay constant', unit: 's⁻¹' },
+          { symbol: 't', name: 'Time', unit: 's' }
+        ],
+        description: 'Describes how the number of undecayed nuclei changes over time',
+        calculateResult: (values) => {
+          if (!values.N && values['N₀'] && values['λ'] && values.t) {
+            const result = values['N₀'] * Math.exp(-values['λ'] * values.t);
+            return {
+              result,
+              unit: '',
+              steps: [
+                `Start with the equation: N = N₀e^(-λt)`,
+                `Substitute values: N = ${values['N₀']} × e^(-${values['λ']} × ${values.t})`,
+                `Calculate: N = ${values['N₀']} × ${Math.exp(-values['λ'] * values.t).toFixed(6)}`,
+                `N = ${result}`
+              ]
+            };
+          } else if (values.N && !values['N₀'] && values['λ'] && values.t) {
+            const result = values.N / Math.exp(-values['λ'] * values.t);
+            return {
+              result,
+              unit: '',
+              steps: [
+                `Start with the equation: N = N₀e^(-λt)`,
+                `Rearrange to find N₀: N₀ = N/e^(-λt)`,
+                `Substitute values: N₀ = ${values.N} / e^(-${values['λ']} × ${values.t})`,
+                `Calculate: N₀ = ${values.N} / ${Math.exp(-values['λ'] * values.t).toFixed(6)}`,
+                `N₀ = ${result}`
+              ]
+            };
+          } else if (values.N && values['N₀'] && !values['λ'] && values.t) {
+            const result = -Math.log(values.N / values['N₀']) / values.t;
+            return {
+              result,
+              unit: 's⁻¹',
+              steps: [
+                `Start with the equation: N = N₀e^(-λt)`,
+                `Rearrange to find λ: λ = -ln(N/N₀)/t`,
+                `Substitute values: λ = -ln(${values.N}/${values['N₀']}) / ${values.t}`,
+                `Calculate: λ = ${result} s⁻¹`
+              ]
+            };
+          } else {
+            const result = -Math.log(values.N / values['N₀']) / values['λ'];
+            return {
+              result,
+              unit: 's',
+              steps: [
+                `Start with the equation: N = N₀e^(-λt)`,
+                `Rearrange to find t: t = -ln(N/N₀)/λ`,
+                `Substitute values: t = -ln(${values.N}/${values['N₀']}) / ${values['λ']}`,
+                `Calculate: t = ${result} s`
+              ]
+            };
+          }
+        }
+      },
+      {
+        id: 'half-life',
+        name: 'Half-Life',
+        equation: 't₁/₂ = ln(2)/λ',
+        variables: [
+          { symbol: 't₁/₂', name: 'Half-life', unit: 's' },
+          { symbol: 'λ', name: 'Decay constant', unit: 's⁻¹' }
+        ],
+        description: 'Relates the half-life to the decay constant',
+        calculateResult: (values) => {
+          if (!values['t₁/₂'] && values['λ']) {
+            const result = Math.log(2) / values['λ'];
+            return {
+              result,
+              unit: 's',
+              steps: [
+                `Start with the equation: t₁/₂ = ln(2)/λ`,
+                `Substitute values: t₁/₂ = ${Math.log(2).toFixed(6)} / ${values['λ']}`,
+                `Calculate: t₁/₂ = ${result} s`
+              ]
+            };
+          } else {
+            const result = Math.log(2) / values['t₁/₂'];
+            return {
+              result,
+              unit: 's⁻¹',
+              steps: [
+                `Start with the equation: t₁/₂ = ln(2)/λ`,
+                `Rearrange to find λ: λ = ln(2)/t₁/₂`,
+                `Substitute values: λ = ${Math.log(2).toFixed(6)} / ${values['t₁/₂']}`,
+                `Calculate: λ = ${result} s⁻¹`
               ]
             };
           }
@@ -726,3 +1321,4 @@ const PhysicsFormulas: React.FC<PhysicsFormulasProps> = ({ onInsertFormula, clas
 };
 
 export default PhysicsFormulas;
+
