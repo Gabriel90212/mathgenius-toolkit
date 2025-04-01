@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -386,9 +385,9 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const handlePhysicsFormulas = () => {
     setShowPhysicsFormulas(!showPhysicsFormulas);
     if (!showPhysicsFormulas) {
-      setActiveTab("formulas");
-    } else {
       setActiveTab("calculator");
+    } else {
+      setActiveTab("formulas");
     }
   };
   
@@ -729,7 +728,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
           <TabsContent value="calculator">
             {/* Calculator buttons will be rendered here */}
           </TabsContent>
-          <TabsContent value="formulas">
+          <TabsContent value="formulas" className="border rounded-md p-2">
             <PhysicsFormulas 
               onInsertFormula={handleInsertFormula}
             />
