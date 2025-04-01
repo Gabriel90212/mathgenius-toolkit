@@ -237,7 +237,7 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
         </div>
       </div>
       
-      <div className="relative w-full h-[200px] border rounded-lg overflow-hidden canvas-container">
+      <div className="relative w-full h-[350px] border rounded-lg overflow-hidden canvas-container">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full cursor-crosshair touch-none"
