@@ -4,7 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calculator, Thermometer, Waves, Lightbulb, Circle, CircleArrowDown, CircleArrowUp, FileText, Flask, Magnet } from "lucide-react";
+import { Calculator, Thermometer, Waves, Lightbulb, Circle, CircleArrowDown, CircleArrowUp, FileText, FlaskConical, Magnet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
