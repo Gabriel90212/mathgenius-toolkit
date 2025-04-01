@@ -19,6 +19,7 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
   const [equation, setEquation] = useState("");
   const [result, setResult] = useState("");
   const [recognizing, setRecognizing] = useState(false);
+  const [calculationCount, setCalculationCount] = useState(0);
   
   // Setup canvas on mount
   useEffect(() => {
@@ -166,6 +167,17 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     setResult("");
   };
   
+  // Generate a mock equation based on calculation count
+  const generateMockEquation = () => {
+    // Create different equations based on the calculation count
+    const equations = [
+      "2+2", "3*4", "10-5", "8/2", "5^2", "7+3", "9-4", "6*3", "15/3", "4^2"
+    ];
+    
+    // Get the equation based on the current count (cycling through the array)
+    return equations[calculationCount % equations.length];
+  };
+  
   // Recognize and calculate
   const recognizeAndCalculate = () => {
     setRecognizing(true);
@@ -173,8 +185,8 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     // Simulate recognition of handwritten mathematical expression
     // In a real application, you would use a handwriting recognition API
     setTimeout(() => {
-      // For demo, we'll use a simple example
-      const mockRecognizedEquation = "2+2";
+      // Generate a different mock equation each time
+      const mockRecognizedEquation = generateMockEquation();
       setEquation(mockRecognizedEquation);
       
       try {
@@ -184,6 +196,9 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
         
         // Pass result to parent component
         onCalculation(`${mockRecognizedEquation} = ${calculatedResult}`);
+        
+        // Increment the calculation count for next time
+        setCalculationCount(prev => prev + 1);
         
         toast.success("Calculation completed");
       } catch (error) {
