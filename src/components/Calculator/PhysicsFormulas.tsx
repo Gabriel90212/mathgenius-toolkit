@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { 
   Accordion, 
@@ -470,7 +471,7 @@ const PhysicsFormulas: React.FC<PhysicsFormulasProps> = ({ onInsertFormula }) =>
                     
                     <Formula
                       label="Hamilton's Equations"
-                      formula="q̇ᵢ = ∂H/∂pᵢ, ṗᵢ = -∂H/∂qᵢ"
+                      formula="q̇ᵢ = ∂H/∂pᵢ, ṗᵢ = -∂H/∂qᵢ"
                       explanation="Equations of motion in terms of Hamiltonian"
                       variables={[
                         { symbol: "H", name: "Hamiltonian" },
@@ -800,3 +801,61 @@ const PhysicsFormulas: React.FC<PhysicsFormulasProps> = ({ onInsertFormula }) =>
                 explanation="The velocity of a galaxy is proportional to its distance"
                 variables={[
                   { symbol: "v", name: "Velocity of galaxy", unit: "km/s" },
+                  { symbol: "H₀", name: "Hubble constant", unit: "km/s/Mpc" },
+                  { symbol: "D", name: "Distance to galaxy", unit: "Mpc" },
+                ]}
+                onInsert={onInsertFormula}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+      
+      {activeCategory === "mathematical" && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="basic">
+            <AccordionTrigger className="text-base font-medium">Mathematical Methods in Physics</AccordionTrigger>
+            <AccordionContent>
+              <Formula
+                label="Vector Dot Product"
+                formula="A·B = |A||B|cosθ"
+                explanation="Scalar product of two vectors"
+                variables={[
+                  { symbol: "A·B", name: "Dot product" },
+                  { symbol: "|A|", name: "Magnitude of vector A" },
+                  { symbol: "|B|", name: "Magnitude of vector B" },
+                  { symbol: "θ", name: "Angle between vectors", unit: "rad" },
+                ]}
+                onInsert={onInsertFormula}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+      
+      {activeCategory === "nuclear" && (
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="basic">
+            <AccordionTrigger className="text-base font-medium">Nuclear Physics</AccordionTrigger>
+            <AccordionContent>
+              <Formula
+                label="Radioactive Decay Law"
+                formula="N(t) = N₀e^(-λt)"
+                explanation="Number of radioactive nuclei after time t"
+                variables={[
+                  { symbol: "N(t)", name: "Number of nuclei at time t" },
+                  { symbol: "N₀", name: "Initial number of nuclei" },
+                  { symbol: "λ", name: "Decay constant", unit: "s⁻¹" },
+                  { symbol: "t", name: "Time", unit: "s" },
+                ]}
+                onInsert={onInsertFormula}
+              />
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      )}
+    </div>
+  );
+};
+
+export default PhysicsFormulas;
