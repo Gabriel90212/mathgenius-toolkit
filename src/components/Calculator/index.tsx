@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
 import CalculusSteps from "./CalculusSteps";
-import ChemistrySteps from "./ChemistrySteps";
+import ChemistrySteps, { getAllElementSymbols, getElementGroups, getCommonElements } from "./ChemistrySteps";
 import PhysicsSteps from "./PhysicsSteps";
 import CanvasCalculator from "./CanvasCalculator";
 import PhysicsFormulas from "./PhysicsFormulas";
@@ -20,7 +20,6 @@ import {
   calculateDynamics,
   analyzeCircuit,
   calculateLaplace,
-  getAllElementSymbols,
   type CalculusResult,
   type CalculusOperation,
   type ChemistryResult,
