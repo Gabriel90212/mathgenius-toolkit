@@ -1,8 +1,9 @@
-
 import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { math } from "mathjs";
+import { create, all } from "mathjs";
+
+const math = create(all);
 
 interface CanvasCalculatorProps {
   onCalculation: (result: string) => void;
@@ -24,7 +25,6 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
   const [currentStroke, setCurrentStroke] = useState<{start: {x: number, y: number}, points: Array<{x: number, y: number}>} | null>(null);
   const [userInput, setUserInput] = useState("");
   
-  // Setup canvas on mount
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -32,24 +32,20 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     
-    // Set canvas dimensions to match the display size
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width;
     canvas.height = rect.height;
     
-    // Set initial canvas state
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     ctx.lineWidth = 5;
     ctx.strokeStyle = "#000";
     
-    // Clear canvas with white background
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
   }, []);
   
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       const canvas = canvasRef.current;
@@ -58,18 +54,14 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       
-      // Save current drawing
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Resize canvas to actual display dimensions
       const rect = canvas.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
       
-      // Restore drawing
       ctx.putImageData(imageData, 0, 0);
       
-      // Reset canvas properties
       ctx.lineJoin = "round";
       ctx.lineCap = "round";
       ctx.lineWidth = 5;
@@ -80,7 +72,6 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
   
-  // Drawing functions
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     setIsDrawing(true);
     
@@ -89,27 +80,22 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     
     const rect = canvas.getBoundingClientRect();
     
-    // Get coordinates based on event type
     let clientX: number, clientY: number;
     
     if ('touches' in e) {
-      // Touch event
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
     } else {
-      // Mouse event
       clientX = e.clientX;
       clientY = e.clientY;
     }
     
-    // Calculate coordinates relative to canvas, taking DPI scaling into account
     const x = ((clientX - rect.left) / rect.width) * canvas.width;
     const y = ((clientY - rect.top) / rect.height) * canvas.height;
     
     setLastX(x);
     setLastY(y);
     
-    // Start a new stroke
     setCurrentStroke({
       start: {x, y},
       points: []
@@ -127,27 +113,21 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     
     const rect = canvas.getBoundingClientRect();
     
-    // Get coordinates based on event type
     let clientX: number, clientY: number;
     
     if ('touches' in e) {
-      // Touch event
       clientX = e.touches[0].clientX;
       clientY = e.touches[0].clientY;
       
-      // Prevent scrolling when drawing
       e.preventDefault();
     } else {
-      // Mouse event
       clientX = e.clientX;
       clientY = e.clientY;
     }
     
-    // Calculate coordinates relative to canvas, taking DPI scaling into account
     const x = ((clientX - rect.left) / rect.width) * canvas.width;
     const y = ((clientY - rect.top) / rect.height) * canvas.height;
     
-    // Draw line
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
     ctx.lineTo(x, y);
@@ -156,7 +136,6 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     setLastX(x);
     setLastY(y);
     
-    // Add point to current stroke
     if (currentStroke) {
       setCurrentStroke({
         ...currentStroke,
@@ -168,14 +147,12 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
   const stopDrawing = () => {
     setIsDrawing(false);
     
-    // Add completed stroke to history
     if (currentStroke) {
       setStrokeHistory(prev => [...prev, currentStroke]);
       setCurrentStroke(null);
     }
   };
   
-  // Clear canvas
   const clearCanvas = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -192,7 +169,6 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     setUserInput("");
   };
   
-  // This is a more flexible approach where the user can help with the recognition
   const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(e.target.value);
   };
@@ -203,7 +179,6 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     }
   };
   
-  // Process the user entered equation
   const processUserEquation = () => {
     if (!userInput.trim()) {
       toast.error("Please enter a mathematical expression");
@@ -214,7 +189,6 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     setEquation(userInput);
     
     try {
-      // Safely evaluate the equation using mathjs
       const result = math.evaluate(userInput);
       const calculatedResult = result.toString();
       
@@ -230,18 +204,15 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     }
   };
   
-  // Attempt to recognize and calculate
   const recognizeAndCalculate = () => {
     setRecognizing(true);
     
-    // If we have strokes but no user input, prompt the user
     if (strokeHistory.length > 0 && !userInput) {
       toast.info("Please type in the equation you wrote");
       setRecognizing(false);
       return;
     }
     
-    // If we have user input, process it
     if (userInput) {
       processUserEquation();
     } else {
