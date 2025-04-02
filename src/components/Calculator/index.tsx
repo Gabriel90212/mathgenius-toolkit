@@ -72,6 +72,15 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [showPhysicsFormulas, setShowPhysicsFormulas] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("calculator");
   
+  // Get all element symbols for chemistry mode - now we use the imported function
+  const elementSymbols = getAllElementSymbols();
+  
+  // Get element groups for chemistry mode - now we use the imported function
+  const elementGroups = getElementGroups();
+  
+  // Get common elements for chemistry mode - now we use the imported function
+  const commonElements = getCommonElements();
+
   // Handle number input
   const handleNumberInput = (value: string) => {
     if (value === "." && displayValue.includes(".")) {
@@ -659,24 +668,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [displayValue, storedValue, pendingOperation, isNewInput, calculusMode]);
 
-  // Get common element symbols for chemistry mode
-  const getCommonElements = () => {
-    return ['H', 'O', 'C', 'N', 'Cl', 'Na', 'K', 'Ca', 'Mg', 'Fe', 'S', 'P'];
-  };
-
-  // For displaying element groups in chemistry mode
-  const elementGroups = [
-    ['H', 'Li', 'Na', 'K', 'Rb', 'Cs', 'Fr'],
-    ['Be', 'Mg', 'Ca', 'Sr', 'Ba', 'Ra'],
-    ['B', 'Al', 'Ga', 'In', 'Tl'],
-    ['C', 'Si', 'Ge', 'Sn', 'Pb'],
-    ['N', 'P', 'As', 'Sb', 'Bi'],
-    ['O', 'S', 'Se', 'Te', 'Po'],
-    ['F', 'Cl', 'Br', 'I', 'At'],
-    ['He', 'Ne', 'Ar', 'Kr', 'Xe', 'Rn'],
-    ['Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ag', 'Au']
-  ];
-
   return (
     <div className={cn(
       "p-6 rounded-3xl glass-morphism calc-shadow",
@@ -733,6 +724,44 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             />
           </TabsContent>
         </Tabs>
+      )}
+      
+      {/* Chemistry element selection */}
+      {chemistryMode && !redoxMode && (
+        <div className="mt-4 mb-4 p-3 bg-muted/30 rounded-lg">
+          <h3 className="text-sm font-medium mb-2">Periodic Table Elements</h3>
+          <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto p-1">
+            {elementSymbols.map((element) => (
+              <button
+                key={element}
+                onClick={() => handleChemicalInput(element)}
+                className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
+              >
+                {element}
+              </button>
+            ))}
+          </div>
+          
+          <h3 className="text-sm font-medium mt-3 mb-2">Element Groups</h3>
+          <div className="space-y-2">
+            {elementGroups.map((group, index) => (
+              <div key={index} className="space-y-1">
+                <h4 className="text-xs text-muted-foreground">{group.name}</h4>
+                <div className="flex flex-wrap gap-1">
+                  {group.elements.map((element) => (
+                    <button
+                      key={element}
+                      onClick={() => handleChemicalInput(element)}
+                      className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
+                    >
+                      {element}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
       
       {activeTab === "calculator" || (!physicsMode && !showPhysicsFormulas) ? (
@@ -899,7 +928,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="-4" onClick={() => handleRedoxNotation('reduction-4')} variant="redox" />
                 
                 {/* Common elements */}
-                {getCommonElements().map(element => (
+                {commonElements.slice(0, 20).map(element => (
                   <Button 
                     key={element} 
                     value={element} 
@@ -937,7 +966,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="Redox" onClick={toggleRedoxMode} variant="redox" />
                 
                 {/* Common elements */}
-                {getCommonElements().map(element => (
+                {commonElements.slice(0, 20).map(element => (
                   <Button 
                     key={element} 
                     value={element} 
