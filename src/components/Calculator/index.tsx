@@ -2,7 +2,13 @@ import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
 import CalculusSteps from "./CalculusSteps";
-import ChemistrySteps, { getAllElementSymbols, getElementGroups, getCommonElements } from "./ChemistrySteps";
+import ChemistrySteps, { 
+  getAllElementSymbols, 
+  getElementGroups, 
+  getCommonElements, 
+  getElementBySymbol,
+  type ElementInfo
+} from "./ChemistrySteps";
 import PhysicsSteps from "./PhysicsSteps";
 import CanvasCalculator from "./CanvasCalculator";
 import PhysicsFormulas from "./PhysicsFormulas";
@@ -30,13 +36,13 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface CalculatorProps {
   className?: string;
 }
 
 const Calculator: React.FC<CalculatorProps> = ({ className }) => {
-  // State for display value, expression history, and memory
   const [displayValue, setDisplayValue] = useState<string>("0");
   const [expression, setExpression] = useState<string>("");
   const [storedValue, setStoredValue] = useState<number | null>(null);
@@ -45,53 +51,36 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [memory, setMemory] = useState<number>(0);
   const [history, setHistory] = useState<string[]>([]);
   const [shiftMode, setShiftMode] = useState<boolean>(false);
-  
-  // State for calculus operations
   const [calculusMode, setCalculusMode] = useState<boolean>(false);
   const [calculusOperation, setCalculusOperation] = useState<'derivative' | 'integral' | 'double-integral' | 'triple-integral' | null>(null);
   const [calculusResult, setCalculusResult] = useState<CalculusResult | null>(null);
   const [variable, setVariable] = useState<'x' | 'y' | 't'>('x');
-  
-  // State for chemistry operations
   const [chemistryMode, setChemistryMode] = useState<boolean>(false);
   const [chemistryOperation, setChemistryOperation] = useState<ChemistryOperation | null>(null);
   const [chemistryResult, setChemistryResult] = useState<ChemistryResult | null>(null);
   const [redoxMode, setRedoxMode] = useState<boolean>(false);
-  
-  // State for physics operations
   const [physicsMode, setPhysicsMode] = useState<boolean>(false);
   const [physicsOperation, setPhysicsOperation] = useState<PhysicsOperation | null>(null);
-  const [physicsResult, setPhysicsResult] = useState<PhysicsResult | null>(null);
   const [physicsSubMode, setPhysicsSubMode] = useState<'kinematics' | 'dynamics' | 'circuits' | 'laplace'>('kinematics');
-  
-  // State for canvas calculator
   const [showCanvas, setShowCanvas] = useState<boolean>(false);
   const [canvasResult, setCanvasResult] = useState<string | null>(null);
-  
-  // New state for advanced physics formulas
   const [showPhysicsFormulas, setShowPhysicsFormulas] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("calculator");
-  
-  // Get all element symbols for chemistry mode - now we use the imported function
+  const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
+
   const elementSymbols = getAllElementSymbols();
-  
-  // Get element groups for chemistry mode - now we use the imported function
   const elementGroups = getElementGroups();
-  
-  // Get common elements for chemistry mode - now we use the imported function
   const commonElements = getCommonElements();
 
-  // Handle number input
   const handleNumberInput = (value: string) => {
     if (value === "." && displayValue.includes(".")) {
-      return; // Prevent multiple decimal points
+      return;
     }
     
     if (isNewInput) {
       setDisplayValue(value === "." ? "0." : value);
       setIsNewInput(false);
     } else {
-      // Prevent leading zeros
       if (displayValue === "0" && value !== ".") {
         setDisplayValue(value);
       } else {
@@ -100,11 +89,9 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Handle operations (add, subtract, multiply, etc.)
   const handleOperation = (operation: string) => {
     const currentValue = parseFloat(displayValue);
     
-    // If we have a stored value and a pending operation
     if (storedValue !== null && pendingOperation !== null && !isNewInput) {
       const result = calculate(storedValue, currentValue, pendingOperation);
       setStoredValue(result);
@@ -119,7 +106,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setIsNewInput(true);
   };
 
-  // Handle equals operation
   const handleEquals = () => {
     if (storedValue === null || pendingOperation === null) {
       return;
@@ -128,7 +114,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     const currentValue = parseFloat(displayValue);
     const result = calculate(storedValue, currentValue, pendingOperation);
 
-    // Update history
     const historyItem = `${storedValue} ${pendingOperation} ${currentValue} = ${formatNumber(result)}`;
     setHistory([historyItem, ...history].slice(0, 10));
 
@@ -139,23 +124,19 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setIsNewInput(true);
   };
 
-  // Handle scientific functions
   const handleFunction = (funcName: string) => {
     try {
       const currentValue = parseFloat(displayValue);
       let result;
 
       if (funcName === "pow") {
-        // Correctly handle x² specifically
         result = Math.pow(currentValue, 2);
       } else if (funcName === "pow_n") {
-        // For a custom exponent, store the current value and set the operation
         setPendingOperation("^");
         setStoredValue(currentValue);
         setIsNewInput(true);
         return;
       } else if (funcName in scientificFunctions) {
-        // @ts-ignore
         result = scientificFunctions[funcName](currentValue);
       } else {
         throw new Error("Unknown function");
@@ -170,25 +151,19 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Handle calculus operations (derivatives, integrals)
   const handleCalculusOperation = (type: 'derivative' | 'integral' | 'double-integral' | 'triple-integral') => {
     try {
       setCalculusMode(true);
       setCalculusOperation(type);
       
-      // Calculate the result based on the operation type
       let result: CalculusResult;
       if (type === 'derivative') {
         result = calculateDerivative(displayValue, variable);
       } else if (type === 'integral') {
         result = calculateIntegral(displayValue, variable);
       } else if (type === 'double-integral') {
-        // For double integrals, we need to integrate twice
-        // First integration
         const firstResult = calculateIntegral(displayValue, variable);
-        // Second integration on the result of the first
         result = calculateIntegral(firstResult.result, variable === 'x' ? 'y' : 'x');
-        // Update the steps to show both integrations
         result.steps = [
           ...firstResult.steps.map(step => ({
             ...step,
@@ -200,16 +175,11 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
           }))
         ];
       } else if (type === 'triple-integral') {
-        // For triple integrals, we need to integrate three times
-        // First integration
         const firstResult = calculateIntegral(displayValue, variable);
-        // Second integration
         const secondVar = variable === 'x' ? 'y' : (variable === 'y' ? 'z' : 'x');
         const secondResult = calculateIntegral(firstResult.result, secondVar);
-        // Third integration
         const thirdVar = secondVar === 'x' ? 'y' : (secondVar === 'y' ? 'z' : 'x');
         result = calculateIntegral(secondResult.result, thirdVar);
-        // Update the steps to show all three integrations
         result.steps = [
           ...firstResult.steps.map(step => ({
             ...step,
@@ -230,7 +200,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       
       setCalculusResult(result);
       
-      // Update history
       let operationSymbol = '';
       switch (type) {
         case 'derivative': operationSymbol = 'd/dx'; break;
@@ -248,19 +217,15 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Handle chemistry operations (balancing equations, stoichiometry)
   const handleChemistryOperation = (type: ChemistryOperation) => {
     try {
       setChemistryMode(true);
       setChemistryOperation(type);
       
-      // Calculate the result based on the operation type
       let result: ChemistryResult;
       if (type === 'balance') {
         result = balanceChemicalEquation(displayValue);
       } else {
-        // For stoichiometry, we need additional inputs which should be in the displayValue
-        // Format expected: "equation|knownAmount|knownCompound|targetCompound"
         const parts = displayValue.split('|');
         if (parts.length !== 4) {
           throw new Error("For stoichiometry, enter: equation|amount|known|target");
@@ -275,7 +240,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       
       setChemistryResult(result);
       
-      // Update history
       const historyItem = `${type === 'balance' ? 'Balance' : 'Stoichiometry'}: ${displayValue} = ${result.result}`;
       setHistory([historyItem, ...history].slice(0, 10));
       
@@ -284,8 +248,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setChemistryResult(null);
     }
   };
-  
-  // Handle physics operations
+
   const handlePhysicsOperation = (type: PhysicsOperation) => {
     try {
       setPhysicsMode(true);
@@ -293,27 +256,20 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       
       let result: PhysicsResult;
       
-      // Calculate the result based on the physics operation type
       if (type === 'kinematics') {
-        // Format: initialVelocity|finalVelocity|acceleration|time|distance
         const kinematicsType = physicsSubMode === 'kinematics' ? 
-          'distance' : 'velocity'; // Default to distance calculation
-        
+          'distance' : 'velocity';
         result = calculateKinematics(displayValue, kinematicsType);
       } 
       else if (type === 'dynamics') {
-        // Calculate forces, energy, or momentum
         const dynamicsType = physicsSubMode === 'dynamics' ? 
-          'force' : 'energy'; // Default to force calculation
-          
+          'force' : 'energy';
         result = calculateDynamics(displayValue, dynamicsType);
       }
       else if (type === 'circuits') {
-        // Analyze circuit using Kirchhoff's laws
         result = analyzeCircuit(displayValue);
       }
       else if (type === 'laplace') {
-        // Calculate Laplace transform
         result = calculateLaplace(displayValue);
       }
       else {
@@ -322,7 +278,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       
       setPhysicsResult(result);
       
-      // Update history
       const historyItem = `Physics (${type}): ${displayValue} = ${result.result}`;
       setHistory([historyItem, ...history].slice(0, 10));
       
@@ -332,7 +287,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Toggle calculator modes
   const toggleCalculusMode = () => {
     setCalculusMode(!calculusMode);
     setChemistryMode(false);
@@ -345,7 +299,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setCalculusOperation(null);
     }
   };
-  
+
   const toggleChemistryMode = () => {
     setChemistryMode(!chemistryMode);
     setCalculusMode(false);
@@ -358,7 +312,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setChemistryOperation(null);
     }
   };
-  
+
   const togglePhysicsMode = () => {
     setPhysicsMode(!physicsMode);
     setCalculusMode(false);
@@ -374,8 +328,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setShowPhysicsFormulas(false);
     }
   };
-  
-  // Toggle physics sub-modes
+
   const togglePhysicsSubMode = () => {
     setPhysicsSubMode(prev => {
       if (prev === 'kinematics') return 'dynamics';
@@ -389,7 +342,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setPhysicsOperation(null);
   };
 
-  // Handle physics formulas
   const handlePhysicsFormulas = () => {
     setShowPhysicsFormulas(!showPhysicsFormulas);
     if (!showPhysicsFormulas) {
@@ -398,51 +350,29 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setActiveTab("formulas");
     }
   };
-  
-  // Handle inserting a formula from the physics formulas component
+
   const handleInsertFormula = (formula: string) => {
     setDisplayValue(formula);
     setIsNewInput(true);
     setActiveTab("calculator");
   };
 
-  // Handle shift mode (for inverse functions)
   const toggleShiftMode = () => {
     setShiftMode(!shiftMode);
   };
 
-  // Memory operations
   const handleMemory = (operation: string) => {
     const currentValue = parseFloat(displayValue);
     
     switch (operation) {
-      case "MC": // Memory Clear
-        setMemory(0);
-        toast.info("Memory cleared");
-        break;
-      case "MR": // Memory Recall
-        setDisplayValue(formatNumber(memory));
-        setIsNewInput(true);
-        break;
-      case "M+": // Memory Add
-        setMemory(memory + currentValue);
-        toast.info("Added to memory");
-        setIsNewInput(true);
-        break;
-      case "M-": // Memory Subtract
-        setMemory(memory - currentValue);
-        toast.info("Subtracted from memory");
-        setIsNewInput(true);
-        break;
-      case "MS": // Memory Store
-        setMemory(currentValue);
-        toast.info("Stored in memory");
-        setIsNewInput(true);
-        break;
+      case "MC": setMemory(0); toast.info("Memory cleared"); break;
+      case "MR": setDisplayValue(formatNumber(memory)); setIsNewInput(true); break;
+      case "M+": setMemory(memory + currentValue); toast.info("Added to memory"); setIsNewInput(true); break;
+      case "M-": setMemory(memory - currentValue); toast.info("Subtracted from memory"); setIsNewInput(true); break;
+      case "MS": setMemory(currentValue); toast.info("Stored in memory"); setIsNewInput(true); break;
     }
   };
 
-  // Handle +/- (sign change)
   const handlePlusMinus = () => {
     if (displayValue !== "0") {
       setDisplayValue(
@@ -453,7 +383,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Clear everything
   const clearAll = () => {
     setDisplayValue("0");
     setExpression("");
@@ -468,13 +397,11 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setPhysicsOperation(null);
   };
 
-  // Clear only the display (CE)
   const clearDisplay = () => {
     setDisplayValue("0");
     setIsNewInput(true);
   };
 
-  // Delete the last character
   const handleBackspace = () => {
     if (!isNewInput && displayValue.length > 1) {
       setDisplayValue(displayValue.slice(0, -1));
@@ -484,21 +411,17 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Percentage calculation
   const handlePercentage = () => {
     const currentValue = parseFloat(displayValue);
     
     if (storedValue !== null) {
-      // If there's a pending operation, calculate percentage based on stored value
       const percentValue = (storedValue * currentValue) / 100;
       setDisplayValue(formatNumber(percentValue));
     } else {
-      // Just convert the current value to a percentage
       setDisplayValue(formatNumber(currentValue / 100));
     }
   };
 
-  // Add x, y, and other variable symbols for calculus mode
   const handleVariableInput = (variable: string) => {
     if (isNewInput) {
       setDisplayValue(variable);
@@ -508,7 +431,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Toggle between variables (x, y, t)
   const toggleVariable = () => {
     setVariable(prev => {
       if (prev === 'x') return 'y';
@@ -518,7 +440,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     toast.info(`Variable set to ${variable}`);
   };
 
-  // Handle chemical symbols and arrows for chemistry mode
   const handleChemicalInput = (symbol: string) => {
     if (isNewInput) {
       setDisplayValue(symbol);
@@ -527,26 +448,22 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setDisplayValue(displayValue + symbol);
     }
   };
-  
-  // New function to handle subscripts (exponents) for chemical formulas
+
   const handleSubscriptInput = (num: number) => {
     if (isNewInput) {
       setDisplayValue(num.toString());
       setIsNewInput(false);
     } else {
-      // Convert the number to a subscript character
       const subscripts = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'];
       setDisplayValue(displayValue + subscripts[num]);
     }
   };
-  
-  // New function to handle superscripts (for charges, etc.)
+
   const handleSuperscriptInput = (symbol: string) => {
     if (isNewInput) {
       setDisplayValue(symbol);
       setIsNewInput(false);
     } else {
-      // Map of superscript characters
       const superscriptMap: Record<string, string> = {
         '+': '⁺',
         '-': '⁻',
@@ -564,8 +481,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setDisplayValue(displayValue + (superscriptMap[symbol] || symbol));
     }
   };
-  
-  // Add physics units and symbols for physics mode
+
   const handlePhysicsInput = (symbol: string) => {
     if (isNewInput) {
       setDisplayValue(symbol);
@@ -575,7 +491,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // New function to handle custom exponents
   const handleExponent = (base: number, exponent: number) => {
     try {
       const result = Math.pow(base, exponent);
@@ -587,48 +502,38 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       clearDisplay();
     }
   };
-  
-  // New function to handle redox notation
+
   const handleRedoxNotation = (type: string) => {
     if (type === 'e-') {
-      // Add electron symbol
       handleChemicalInput('e⁻');
     } else if (type === 'oxidation') {
-      // For oxidation state notation
       toggleRedoxMode();
     } else if (type.startsWith('oxidation-')) {
-      // Handle specific oxidation state, e.g. oxidation-3
       const number = type.split('-')[1];
       handleSuperscriptInput('+' + number);
     } else if (type.startsWith('reduction-')) {
-      // Handle specific reduction state, e.g. reduction-2
       const number = type.split('-')[1];
       handleSuperscriptInput('-' + number);
     }
   };
-  
-  // Toggle redox mode
+
   const toggleRedoxMode = () => {
     setRedoxMode(!redoxMode);
     if (!redoxMode) {
       toast.info("Redox mode activated - select oxidation states");
     }
   };
-  
-  // Toggle canvas calculator mode
+
   const toggleCanvasMode = () => {
     setShowCanvas(!showCanvas);
   };
-  
-  // Handle canvas calculation result
+
   const handleCanvasCalculation = (result: string) => {
     setCanvasResult(result);
     
-    // Add to history
     setHistory([result, ...history].slice(0, 10));
   };
-  
-  // Handle general exponent input (for any x^n)
+
   const handleExponentInput = () => {
     if (!isNewInput) {
       setDisplayValue(displayValue + "^");
@@ -638,7 +543,21 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Keyboard support
+  const handleElementSelect = (symbol: string) => {
+    handleChemicalInput(symbol);
+    const elementInfo = getElementBySymbol(symbol);
+    if (elementInfo) {
+      setSelectedElement(elementInfo);
+    } else {
+      if (symbol.includes('2') || symbol.includes('3') || symbol.includes('4')) {
+        setSelectedElement(null);
+      } else {
+        toast.info(`No detailed information available for ${symbol}`);
+        setSelectedElement(null);
+      }
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key.match(/[0-9.]/)) {
@@ -708,7 +627,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         />
       )}
       
-      {/* Physics mode tabs */}
       {(physicsMode || showPhysicsFormulas) && (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
           <TabsList className="grid w-full grid-cols-2">
@@ -726,41 +644,93 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         </Tabs>
       )}
       
-      {/* Chemistry element selection */}
       {chemistryMode && !redoxMode && (
         <div className="mt-4 mb-4 p-3 bg-muted/30 rounded-lg">
-          <h3 className="text-sm font-medium mb-2">Periodic Table Elements</h3>
-          <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto p-1">
-            {elementSymbols.map((element) => (
-              <button
-                key={element}
-                onClick={() => handleChemicalInput(element)}
-                className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
-              >
-                {element}
-              </button>
-            ))}
-          </div>
-          
-          <h3 className="text-sm font-medium mt-3 mb-2">Element Groups</h3>
-          <div className="space-y-2">
-            {elementGroups.map((group, index) => (
-              <div key={index} className="space-y-1">
-                <h4 className="text-xs text-muted-foreground">{group.name}</h4>
-                <div className="flex flex-wrap gap-1">
-                  {group.elements.map((element) => (
-                    <button
-                      key={element}
-                      onClick={() => handleChemicalInput(element)}
-                      className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
-                    >
-                      {element}
-                    </button>
-                  ))}
-                </div>
+          <Tabs defaultValue="periodic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="periodic">Periodic Table</TabsTrigger>
+              <TabsTrigger value="groups">Element Groups</TabsTrigger>
+              <TabsTrigger value="info">Element Info</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="periodic" className="mt-2">
+              <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto p-1">
+                {elementSymbols.map((element) => (
+                  <button
+                    key={element}
+                    onClick={() => handleElementSelect(element)}
+                    className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
+                  >
+                    {element}
+                  </button>
+                ))}
               </div>
-            ))}
-          </div>
+            </TabsContent>
+            
+            <TabsContent value="groups" className="mt-2">
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {elementGroups.map((group, index) => (
+                  <div key={index} className="space-y-1">
+                    <h4 className="text-xs text-muted-foreground">{group.name}</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {group.elements.map((element) => (
+                        <button
+                          key={element}
+                          onClick={() => handleElementSelect(element)}
+                          className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
+                        >
+                          {element}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="info" className="mt-2">
+              {selectedElement ? (
+                <Card className="border-primary/20">
+                  <CardHeader className="py-2 px-3">
+                    <CardTitle className="text-base flex items-center justify-between">
+                      <span>{selectedElement.symbol} - {selectedElement.name}</span>
+                      <span className="text-xs text-muted-foreground">#{selectedElement.atomicNumber}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 text-xs space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <span className="text-muted-foreground">Atomic Mass:</span> {selectedElement.atomicMass}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Category:</span> {selectedElement.category}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Group:</span> {selectedElement.group}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Period:</span> {selectedElement.period}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Valence e⁻:</span> {selectedElement.valenceElectrons}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Configuration:</span> {selectedElement.electronConfiguration}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block mb-1">Description:</span>
+                      <p className="text-xs">{selectedElement.description}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="text-center text-muted-foreground p-4">
+                  Click an element to view detailed information
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       )}
       
@@ -769,7 +739,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
           "grid gap-3 mt-4",
           calculusMode || chemistryMode || redoxMode ? "grid-cols-10" : "grid-cols-4"
         )}>
-          {/* Mode Selection Buttons */}
           <Button 
             value={chemistryMode ? "Basic" : "Chemistry"} 
             onClick={toggleChemistryMode} 
@@ -794,11 +763,9 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             variant={showCanvas ? "equal" : "function"} 
           />
           
-          {/* Common buttons in all modes */}
           <Button value="C" onClick={clearAll} variant="function" />
           
           {physicsMode ? (
-            // Physics Mode Buttons
             <>
               <Button value="⌫" onClick={handleBackspace} variant="function" />
               <Button 
@@ -812,7 +779,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="|" onClick={() => handlePhysicsInput('|')} variant="operator" />
 
               {physicsSubMode === 'kinematics' ? (
-                // Kinematics Mode Buttons
                 <>
                   <Button value="Distance" onClick={() => handlePhysicsOperation('kinematics')} variant="function" />
                   <Button value="Velocity" onClick={() => handlePhysicsOperation('kinematics')} variant="function" />
@@ -828,7 +794,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   <Button value="x" onClick={() => handlePhysicsInput('x')} variant="number" />
                 </>
               ) : physicsSubMode === 'dynamics' ? (
-                // Dynamics Mode Buttons
                 <>
                   <Button value="Force" onClick={() => handlePhysicsOperation('dynamics')} variant="function" />
                   <Button value="Energy" onClick={() => handlePhysicsOperation('dynamics')} variant="function" />
@@ -841,7 +806,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   <Button value="g" onClick={() => handlePhysicsInput('9.8')} variant="number" />
                 </>
               ) : physicsSubMode === 'circuits' ? (
-                // Circuits Mode Buttons
                 <>
                   <Button value="Ohm's Law" onClick={() => handlePhysicsOperation('circuits')} variant="function" />
                   <Button value="Series" onClick={() => handlePhysicsOperation('circuits')} variant="function" />
@@ -859,7 +823,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   <Button value="k-node" onClick={() => handlePhysicsInput('kirchhoff-node')} variant="number" />
                 </>
               ) : (
-                // Laplace Mode Buttons
                 <>
                   <Button value="Forward" onClick={() => handlePhysicsOperation('laplace')} variant="function" />
                   <Button value="Inverse" onClick={() => handlePhysicsOperation('laplace')} variant="function" />
@@ -878,7 +841,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 </>
               )}
 
-              {/* Common physics buttons for all sub-modes */}
               <Button value="7" onClick={() => handleNumberInput('7')} />
               <Button value="8" onClick={() => handleNumberInput('8')} />
               <Button value="9" onClick={() => handleNumberInput('9')} />
@@ -902,7 +864,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
             </>
           ) : chemistryMode ? (
             redoxMode ? (
-              // Redox Mode Buttons
               <>
                 <Button value="⌫" onClick={handleBackspace} variant="function" />
                 <Button value="e⁻" onClick={() => handleRedoxNotation('e-')} variant="redox" />
@@ -911,7 +872,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
                 <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
                 
-                {/* Oxidation states */}
                 <Button value="+1" onClick={() => handleRedoxNotation('oxidation-1')} variant="redox" />
                 <Button value="+2" onClick={() => handleRedoxNotation('oxidation-2')} variant="redox" />
                 <Button value="+3" onClick={() => handleRedoxNotation('oxidation-3')} variant="redox" />
@@ -921,13 +881,11 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="+7" onClick={() => handleRedoxNotation('oxidation-7')} variant="redox" />
                 <Button value="+8" onClick={() => handleRedoxNotation('oxidation-8')} variant="redox" />
 
-                {/* Reduction states */}
                 <Button value="-1" onClick={() => handleRedoxNotation('reduction-1')} variant="redox" />
                 <Button value="-2" onClick={() => handleRedoxNotation('reduction-2')} variant="redox" />
                 <Button value="-3" onClick={() => handleRedoxNotation('reduction-3')} variant="redox" />
                 <Button value="-4" onClick={() => handleRedoxNotation('reduction-4')} variant="redox" />
                 
-                {/* Common elements */}
                 {commonElements.slice(0, 20).map(element => (
                   <Button 
                     key={element} 
@@ -937,7 +895,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   />
                 ))}
 
-                {/* Numerical subscripts */}
                 {[1, 2, 3, 4].map(num => (
                   <Button 
                     key={`sub-${num}`} 
@@ -948,7 +905,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 ))}
               </>
             ) : (
-              // Regular Chemistry Mode Buttons
               <>
                 <Button value="⌫" onClick={handleBackspace} variant="function" />
                 <Button value="CE" onClick={clearDisplay} variant="function" />
@@ -965,7 +921,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
                 <Button value="Redox" onClick={toggleRedoxMode} variant="redox" />
                 
-                {/* Common elements */}
                 {commonElements.slice(0, 20).map(element => (
                   <Button 
                     key={element} 
@@ -975,7 +930,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   />
                 ))}
                 
-                {/* Numerical subscripts */}
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
                   <Button 
                     key={`sub-${num}`} 
@@ -985,13 +939,11 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   />
                 ))}
                 
-                {/* Operation buttons */}
                 <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="equal" wide />
                 <Button value="Stoich." onClick={() => handleChemistryOperation('stoichiometry')} variant="equal" wide />
               </>
             )
           ) : calculusMode ? (
-            // Calculus Mode Buttons
             <>
               <Button value="⌫" onClick={handleBackspace} variant="function" />
               <Button value="CE" onClick={clearDisplay} variant="function" />
@@ -1039,7 +991,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="∫∫∫" onClick={() => handleCalculusOperation('triple-integral')} variant="equal" />
             </>
           ) : (
-            // Default Calculator Mode
             <>
               <Button value="⌫" onClick={handleBackspace} variant="function" />
               <Button value="CE" onClick={clearDisplay} variant="function" />
@@ -1071,7 +1022,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
               
               {shiftMode ? (
-                // Inverse functions
                 <>
                   <Button value="x^n" onClick={() => handleFunction('pow_n')} variant="function" />
                   <Button value="√" onClick={() => handleFunction('sqrt')} variant="function" />
@@ -1079,7 +1029,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   <Button value="ln" onClick={() => handleFunction('ln')} variant="function" />
                 </>
               ) : (
-                // Regular functions
                 <>
                   <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
                   <Button value="1/x" onClick={() => handleFunction('reciprocal')} variant="function" />
