@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { math } from "mathjs";
 
 interface CanvasCalculatorProps {
   onCalculation: (result: string) => void;
@@ -19,7 +20,9 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
   const [equation, setEquation] = useState("");
   const [result, setResult] = useState("");
   const [recognizing, setRecognizing] = useState(false);
-  const [calculationCount, setCalculationCount] = useState(0);
+  const [strokeHistory, setStrokeHistory] = useState<Array<{start: {x: number, y: number}, points: Array<{x: number, y: number}>}>>([]);
+  const [currentStroke, setCurrentStroke] = useState<{start: {x: number, y: number}, points: Array<{x: number, y: number}>} | null>(null);
+  const [userInput, setUserInput] = useState("");
   
   // Setup canvas on mount
   useEffect(() => {
@@ -105,6 +108,12 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     
     setLastX(x);
     setLastY(y);
+    
+    // Start a new stroke
+    setCurrentStroke({
+      start: {x, y},
+      points: []
+    });
   };
   
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
@@ -146,10 +155,24 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     
     setLastX(x);
     setLastY(y);
+    
+    // Add point to current stroke
+    if (currentStroke) {
+      setCurrentStroke({
+        ...currentStroke,
+        points: [...currentStroke.points, {x, y}]
+      });
+    }
   };
   
   const stopDrawing = () => {
     setIsDrawing(false);
+    
+    // Add completed stroke to history
+    if (currentStroke) {
+      setStrokeHistory(prev => [...prev, currentStroke]);
+      setCurrentStroke(null);
+    }
   };
   
   // Clear canvas
@@ -165,49 +188,66 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
     
     setEquation("");
     setResult("");
+    setStrokeHistory([]);
+    setUserInput("");
   };
   
-  // Generate a mock equation based on calculation count
-  const generateMockEquation = () => {
-    // Create different equations based on the calculation count
-    const equations = [
-      "2+2", "3*4", "10-5", "8/2", "5^2", "7+3", "9-4", "6*3", "15/3", "4^2"
-    ];
+  // This is a more flexible approach where the user can help with the recognition
+  const handleUserInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserInput(e.target.value);
+  };
+  
+  const handleMathInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      processUserEquation();
+    }
+  };
+  
+  // Process the user entered equation
+  const processUserEquation = () => {
+    if (!userInput.trim()) {
+      toast.error("Please enter a mathematical expression");
+      return;
+    }
     
-    // Get the equation based on the current count (cycling through the array)
-    return equations[calculationCount % equations.length];
+    setRecognizing(true);
+    setEquation(userInput);
+    
+    try {
+      // Safely evaluate the equation using mathjs
+      const result = math.evaluate(userInput);
+      const calculatedResult = result.toString();
+      
+      setResult(calculatedResult);
+      onCalculation(`${userInput} = ${calculatedResult}`);
+      toast.success("Calculation completed");
+    } catch (error) {
+      console.error("Calculation error:", error);
+      setResult("Error");
+      toast.error("Could not calculate. Check your expression syntax.");
+    } finally {
+      setRecognizing(false);
+    }
   };
   
-  // Recognize and calculate
+  // Attempt to recognize and calculate
   const recognizeAndCalculate = () => {
     setRecognizing(true);
     
-    // Simulate recognition of handwritten mathematical expression
-    // In a real application, you would use a handwriting recognition API
-    setTimeout(() => {
-      // Generate a different mock equation each time
-      const mockRecognizedEquation = generateMockEquation();
-      setEquation(mockRecognizedEquation);
-      
-      try {
-        // Calculate result
-        const calculatedResult = eval(mockRecognizedEquation).toString();
-        setResult(calculatedResult);
-        
-        // Pass result to parent component
-        onCalculation(`${mockRecognizedEquation} = ${calculatedResult}`);
-        
-        // Increment the calculation count for next time
-        setCalculationCount(prev => prev + 1);
-        
-        toast.success("Calculation completed");
-      } catch (error) {
-        setResult("Error");
-        toast.error("Could not calculate the expression");
-      }
-      
+    // If we have strokes but no user input, prompt the user
+    if (strokeHistory.length > 0 && !userInput) {
+      toast.info("Please type in the equation you wrote");
       setRecognizing(false);
-    }, 1500);
+      return;
+    }
+    
+    // If we have user input, process it
+    if (userInput) {
+      processUserEquation();
+    } else {
+      toast.error("Please write or type an equation first");
+      setRecognizing(false);
+    }
   };
   
   return (
@@ -232,12 +272,12 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
               recognizing ? "pulse-animation" : ""
             )}
           >
-            {recognizing ? "Recognizing..." : "Calculate"}
+            {recognizing ? "Calculating..." : "Calculate"}
           </button>
         </div>
       </div>
       
-      <div className="relative w-full h-[350px] border rounded-lg overflow-hidden canvas-container">
+      <div className="relative w-full h-[250px] border rounded-lg overflow-hidden canvas-container">
         <canvas
           ref={canvasRef}
           className="absolute inset-0 w-full h-full cursor-crosshair touch-none"
@@ -251,11 +291,28 @@ const CanvasCalculator: React.FC<CanvasCalculatorProps> = ({
         />
       </div>
       
+      <div className="flex flex-col space-y-3">
+        <div className="flex items-center space-x-2">
+          <input
+            type="text"
+            value={userInput}
+            onChange={handleUserInputChange}
+            onKeyDown={handleMathInput}
+            placeholder="Type your equation here (e.g., 2+2)"
+            className="flex-1 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        
+        <div className="text-sm text-muted-foreground">
+          Write your equation on the canvas, then type it in the input box and press Enter or click Calculate.
+        </div>
+      </div>
+      
       {(equation || result) && (
         <div className="flex flex-col space-y-1 rounded-lg bg-calculator-display p-3">
           {equation && (
             <div className="text-sm text-muted-foreground">
-              Recognized: {equation}
+              Equation: {equation}
             </div>
           )}
           {result && (
