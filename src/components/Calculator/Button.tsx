@@ -45,7 +45,7 @@ const Button: React.FC<ButtonProps> = ({
     memory: "bg-calculator-button-memory text-primary hover:bg-opacity-80",
     redox: "bg-calculator-button-redox text-primary-foreground hover:bg-opacity-80 font-semibold",
     element: "bg-calculator-button-number text-foreground hover:bg-opacity-80 relative",
-    sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-semibold text-xl" // New sum variant with larger text
+    sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-semibold text-2xl" // Increased text size from text-xl to text-2xl
   };
 
   const handleClick = () => {
@@ -70,6 +70,7 @@ const Button: React.FC<ButtonProps> = ({
         small ? "text-xs" : "",
         disabled && "opacity-50 cursor-not-allowed",
         "h-14 md:h-16 shadow-sm",
+        variant === "sum" && "font-bold", // Add extra boldness for sum variant
         className
       )}
       onClick={handleClick}

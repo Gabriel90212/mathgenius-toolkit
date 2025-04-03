@@ -859,7 +859,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="e⁻" onClick={() => handleRedoxNotation('e-')} variant="redox" />
                 <Button value="Back" onClick={() => toggleChemistrySubMode('balance')} variant="function" />
                 <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
-                <Button value="+" onClick={() => handleChemicalInput('+')} variant="sum" />
+                <Button 
+                  value="+" 
+                  onClick={() => handleChemicalInput('+')} 
+                  variant="sum" 
+                  className="text-2xl font-bold"
+                />
                 <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
                 
                 <Button value="+1" onClick={() => handleRedoxNotation('oxidation-1')} variant="redox" />
@@ -910,7 +915,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
                 <Button value="⇌" onClick={() => handleChemicalInput('⇌')} variant="operator" />
                 
-                <Button value="+" onClick={() => handleChemicalInput('+')} variant="sum" />
+                <Button 
+                  value="+" 
+                  onClick={() => handleChemicalInput('+')} 
+                  variant="sum" 
+                  className="text-2xl font-bold"
+                />
                 <Button value="=" onClick={handleEquals} variant="equal" />
                 <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
                 <Button value="Redox" onClick={() => toggleChemistrySubMode('redox')} variant="redox" />
