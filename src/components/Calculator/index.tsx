@@ -61,6 +61,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [redoxMode, setRedoxMode] = useState<boolean>(false);
   const [physicsMode, setPhysicsMode] = useState<boolean>(false);
   const [physicsOperation, setPhysicsOperation] = useState<PhysicsOperation | null>(null);
+  const [physicsResult, setPhysicsResult] = useState<PhysicsResult | null>(null);
   const [physicsSubMode, setPhysicsSubMode] = useState<'kinematics' | 'dynamics' | 'circuits' | 'laplace'>('kinematics');
   const [showCanvas, setShowCanvas] = useState<boolean>(false);
   const [canvasResult, setCanvasResult] = useState<string | null>(null);
