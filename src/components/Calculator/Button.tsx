@@ -9,7 +9,8 @@ type ButtonVariant =
   | "equal" 
   | "memory"
   | "redox"
-  | "element";
+  | "element"
+  | "sum";  // Added new "sum" variant
 
 interface ButtonProps {
   value: string;
@@ -43,7 +44,8 @@ const Button: React.FC<ButtonProps> = ({
     equal: "bg-calculator-button-equal text-white hover:bg-opacity-90 font-semibold",
     memory: "bg-calculator-button-memory text-primary hover:bg-opacity-80",
     redox: "bg-calculator-button-redox text-primary-foreground hover:bg-opacity-80 font-semibold",
-    element: "bg-calculator-button-number text-foreground hover:bg-opacity-80 relative"
+    element: "bg-calculator-button-number text-foreground hover:bg-opacity-80 relative",
+    sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-semibold text-xl" // New sum variant with larger text
   };
 
   const handleClick = () => {
