@@ -68,6 +68,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [showPhysicsFormulas, setShowPhysicsFormulas] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<string>("calculator");
   const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
+  const [chemistrySubMode, setChemistrySubMode] = useState<'balance' | 'stoichiometry' | 'solutions' | 'redox'>('balance');
 
   const elementSymbols = getAllElementSymbols();
   const elementGroups = getElementGroups();
@@ -293,6 +294,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setChemistryMode(false);
     setPhysicsMode(false);
     setShowPhysicsFormulas(false);
+    setShiftMode(false);
     if (!calculusMode) {
       toast.info("Enter an expression in terms of x");
     } else {
@@ -306,11 +308,13 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setCalculusMode(false);
     setPhysicsMode(false);
     setShowPhysicsFormulas(false);
+    setShiftMode(false);
     if (!chemistryMode) {
       toast.info("Enter a chemical equation like 'H2 + O2 → H2O'");
     } else {
       setChemistryResult(null);
       setChemistryOperation(null);
+      setSelectedElement(null);
     }
   };
 
@@ -318,6 +322,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setPhysicsMode(!physicsMode);
     setCalculusMode(false);
     setChemistryMode(false);
+    setShiftMode(false);
     
     if (!physicsMode) {
       toast.info("Enter physics parameters separated by | symbol");
@@ -546,17 +551,39 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
 
   const handleElementSelect = (symbol: string) => {
     handleChemicalInput(symbol);
+    
+    if (symbol.length <= 3 && !symbol.match(/\d/)) {
+      const elementInfo = getElementBySymbol(symbol);
+      if (elementInfo) {
+        setSelectedElement(elementInfo);
+      }
+    } else {
+      setSelectedElement(null);
+    }
+  };
+
+  const handleElementInfoClick = (symbol: string) => {
     const elementInfo = getElementBySymbol(symbol);
     if (elementInfo) {
       setSelectedElement(elementInfo);
+      toast.info(`Showing info for ${elementInfo.name}`);
     } else {
-      if (symbol.includes('2') || symbol.includes('3') || symbol.includes('4')) {
-        setSelectedElement(null);
-      } else {
-        toast.info(`No detailed information available for ${symbol}`);
-        setSelectedElement(null);
-      }
+      toast.info(`No detailed information available for ${symbol}`);
     }
+  };
+
+  const toggleChemistrySubMode = (mode: 'balance' | 'stoichiometry' | 'solutions' | 'redox') => {
+    setChemistrySubMode(mode);
+    setChemistryResult(null);
+    
+    const instructions: Record<typeof mode, string> = {
+      'balance': "Enter a chemical equation like 'H2 + O2 → H2O'",
+      'stoichiometry': "Enter equation|amount|known|target like 'H2 + O2 → H2O|2|H2|H2O'",
+      'solutions': "Enter solute + solvent → solution|concentration|volume",
+      'redox': "Enter redox pairs with oxidation states like 'Fe²⁺ → Fe³⁺ + e⁻'"
+    };
+    
+    toast.info(instructions[mode]);
   };
 
   useEffect(() => {
@@ -645,92 +672,52 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         </Tabs>
       )}
       
-      {chemistryMode && !redoxMode && (
-        <div className="mt-4 mb-4 p-3 bg-muted/30 rounded-lg">
-          <Tabs defaultValue="periodic" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="periodic">Periodic Table</TabsTrigger>
-              <TabsTrigger value="groups">Element Groups</TabsTrigger>
-              <TabsTrigger value="info">Element Info</TabsTrigger>
+      {chemistryMode && selectedElement && (
+        <Card className="mt-4 mb-4 border-primary/20">
+          <CardHeader className="py-2 px-3">
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>{selectedElement.symbol} - {selectedElement.name}</span>
+              <span className="text-xs text-muted-foreground">#{selectedElement.atomicNumber}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 text-xs space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-muted-foreground">Atomic Mass:</span> {selectedElement.atomicMass}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Category:</span> {selectedElement.category}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Group:</span> {selectedElement.group}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Period:</span> {selectedElement.period}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Valence e⁻:</span> {selectedElement.valenceElectrons}
+              </div>
+              <div>
+                <span className="text-muted-foreground">Configuration:</span> {selectedElement.electronConfiguration}
+              </div>
+            </div>
+            <div>
+              <span className="text-muted-foreground block mb-1">Description:</span>
+              <p className="text-xs">{selectedElement.description}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
+      {chemistryMode && (
+        <div className="mt-4 mb-4">
+          <Tabs defaultValue="balance" value={chemistrySubMode} onValueChange={(v) => toggleChemistrySubMode(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="balance">Balance</TabsTrigger>
+              <TabsTrigger value="stoichiometry">Stoichiometry</TabsTrigger>
+              <TabsTrigger value="solutions">Solutions</TabsTrigger>
+              <TabsTrigger value="redox">Redox</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="periodic" className="mt-2">
-              <div className="grid grid-cols-8 gap-1 max-h-40 overflow-y-auto p-1">
-                {elementSymbols.map((element) => (
-                  <button
-                    key={element}
-                    onClick={() => handleElementSelect(element)}
-                    className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
-                  >
-                    {element}
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="groups" className="mt-2">
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {elementGroups.map((group, index) => (
-                  <div key={index} className="space-y-1">
-                    <h4 className="text-xs text-muted-foreground">{group.name}</h4>
-                    <div className="flex flex-wrap gap-1">
-                      {group.elements.map((element) => (
-                        <button
-                          key={element}
-                          onClick={() => handleElementSelect(element)}
-                          className="bg-calculator-button-number text-foreground hover:bg-opacity-80 rounded-md p-1 text-xs"
-                        >
-                          {element}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="info" className="mt-2">
-              {selectedElement ? (
-                <Card className="border-primary/20">
-                  <CardHeader className="py-2 px-3">
-                    <CardTitle className="text-base flex items-center justify-between">
-                      <span>{selectedElement.symbol} - {selectedElement.name}</span>
-                      <span className="text-xs text-muted-foreground">#{selectedElement.atomicNumber}</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-3 text-xs space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <span className="text-muted-foreground">Atomic Mass:</span> {selectedElement.atomicMass}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Category:</span> {selectedElement.category}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Group:</span> {selectedElement.group}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Period:</span> {selectedElement.period}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Valence e⁻:</span> {selectedElement.valenceElectrons}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Configuration:</span> {selectedElement.electronConfiguration}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground block mb-1">Description:</span>
-                      <p className="text-xs">{selectedElement.description}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="text-center text-muted-foreground p-4">
-                  Click an element to view detailed information
-                </div>
-              )}
-            </TabsContent>
           </Tabs>
         </div>
       )}
@@ -738,18 +725,18 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       {activeTab === "calculator" || (!physicsMode && !showPhysicsFormulas) ? (
         <div className={cn(
           "grid gap-3 mt-4",
-          calculusMode || chemistryMode || redoxMode ? "grid-cols-10" : "grid-cols-4"
+          chemistryMode ? "grid-cols-10" : calculusMode ? "grid-cols-8" : "grid-cols-4"
         )}>
-          <Button 
-            value={chemistryMode ? "Basic" : "Chemistry"} 
-            onClick={toggleChemistryMode} 
-            variant={chemistryMode ? "equal" : "function"} 
-          />
-          
           <Button 
             value={calculusMode ? "Basic" : "Calculus"} 
             onClick={toggleCalculusMode} 
             variant={calculusMode ? "equal" : "function"} 
+          />
+          
+          <Button 
+            value={chemistryMode ? "Basic" : "Chemistry"} 
+            onClick={toggleChemistryMode} 
+            variant={chemistryMode ? "equal" : "function"} 
           />
           
           <Button 
@@ -864,11 +851,11 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
             </>
           ) : chemistryMode ? (
-            redoxMode ? (
+            chemistrySubMode === 'redox' ? (
               <>
                 <Button value="⌫" onClick={handleBackspace} variant="function" />
                 <Button value="e⁻" onClick={() => handleRedoxNotation('e-')} variant="redox" />
-                <Button value="Back" onClick={toggleRedoxMode} variant="function" />
+                <Button value="Back" onClick={() => toggleChemistrySubMode('balance')} variant="function" />
                 <Button value="→" onClick={() => handleChemicalInput('→')} variant="operator" />
                 <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
                 <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
@@ -887,14 +874,18 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="-3" onClick={() => handleRedoxNotation('reduction-3')} variant="redox" />
                 <Button value="-4" onClick={() => handleRedoxNotation('reduction-4')} variant="redox" />
                 
-                {commonElements.slice(0, 20).map(element => (
-                  <Button 
-                    key={element} 
-                    value={element} 
-                    onClick={() => handleChemicalInput(element)} 
-                    variant="number" 
-                  />
-                ))}
+                <div className="col-span-10 grid grid-cols-10 gap-2 mt-2">
+                  {elementSymbols.slice(0, 30).map(element => (
+                    <Button 
+                      key={element} 
+                      value={element} 
+                      onClick={() => handleChemicalInput(element)} 
+                      variant="element"
+                      showInfoButton={element.length <= 2 && !element.match(/\d/)}
+                      onInfoClick={() => handleElementInfoClick(element)}
+                    />
+                  ))}
+                </div>
 
                 {[1, 2, 3, 4].map(num => (
                   <Button 
@@ -920,28 +911,36 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="+" onClick={() => handleChemicalInput('+')} variant="operator" />
                 <Button value="=" onClick={handleEquals} variant="equal" />
                 <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
-                <Button value="Redox" onClick={toggleRedoxMode} variant="redox" />
+                <Button value="Redox" onClick={() => toggleChemistrySubMode('redox')} variant="redox" />
                 
-                {commonElements.slice(0, 20).map(element => (
-                  <Button 
-                    key={element} 
-                    value={element} 
-                    onClick={() => handleChemicalInput(element)} 
-                    variant="number" 
-                  />
-                ))}
+                <div className="col-span-5 grid grid-cols-5 gap-2">
+                  {elementSymbols.slice(0, 20).map(element => (
+                    <Button 
+                      key={element} 
+                      value={element} 
+                      onClick={() => handleElementSelect(element)}
+                      variant="element"
+                      showInfoButton={element.length <= 2 && !element.match(/\d/)}
+                      onInfoClick={() => handleElementInfoClick(element)}
+                    />
+                  ))}
+                </div>
                 
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                  <Button 
-                    key={`sub-${num}`} 
-                    value={`${num}`} 
-                    onClick={() => handleSubscriptInput(num)} 
-                    variant="function" 
-                  />
-                ))}
+                <Button 
+                  value="Balance" 
+                  onClick={() => handleChemistryOperation('balance')} 
+                  variant="equal" 
+                  wide 
+                  className="col-span-5"
+                />
                 
-                <Button value="Balance" onClick={() => handleChemistryOperation('balance')} variant="equal" wide />
-                <Button value="Stoich." onClick={() => handleChemistryOperation('stoichiometry')} variant="equal" wide />
+                <Button 
+                  value="Stoichiometry" 
+                  onClick={() => handleChemistryOperation('stoichiometry')} 
+                  variant="equal" 
+                  wide 
+                  className="col-span-5"
+                />
               </>
             )
           ) : calculusMode ? (
