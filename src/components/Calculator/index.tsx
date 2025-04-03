@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -726,7 +727,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       {activeTab === "calculator" || (!physicsMode && !showPhysicsFormulas) ? (
         <div className={cn(
           "grid gap-3 mt-4",
-          chemistryMode ? "grid-cols-10" : calculusMode ? "grid-cols-8" : "grid-cols-4"
+          chemistryMode ? "grid-cols-10" : calculusMode ? "grid-cols-12" : "grid-cols-4"
         )}>
           <Button 
             value={calculusMode ? "Basic" : "Calculus"} 
@@ -956,43 +957,73 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="(" onClick={() => handleVariableInput('(')} variant="function" />
               <Button value=")" onClick={() => handleVariableInput(')')} variant="function" />
               <Button value="√" onClick={() => handleFunction('sqrt')} variant="function" />
-              
-              <Button value="x" onClick={() => handleVariableInput('x')} variant="number" />
-              <Button value="y" onClick={() => handleVariableInput('y')} variant="number" />
-              <Button value="sin" onClick={() => handleVariableInput('sin(')} variant="function" />
-              <Button value="cos" onClick={() => handleVariableInput('cos(')} variant="function" />
-              <Button value="tan" onClick={() => handleVariableInput('tan(')} variant="function" />
-              
-              <Button value="7" onClick={() => handleNumberInput('7')} />
-              <Button value="8" onClick={() => handleNumberInput('8')} />
-              <Button value="9" onClick={() => handleNumberInput('9')} />
-              <Button value="÷" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
-              <Button value="ln" onClick={() => handleVariableInput('ln(')} variant="function" />
-              
-              <Button value="4" onClick={() => handleNumberInput('4')} />
-              <Button value="5" onClick={() => handleNumberInput('5')} />
-              <Button value="6" onClick={() => handleNumberInput('6')} />
-              <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
-              <Button value="log" onClick={() => handleVariableInput('log(')} variant="function" />
-              
-              <Button value="1" onClick={() => handleNumberInput('1')} />
-              <Button value="2" onClick={() => handleNumberInput('2')} />
-              <Button value="3" onClick={() => handleNumberInput('3')} />
-              <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
-              <Button value="e^x" onClick={() => handleVariableInput('e^')} variant="function" />
-              
-              <Button value="0" onClick={() => handleNumberInput('0')} />
-              <Button value="." onClick={() => handleNumberInput('.')} />
-              <Button value="=" onClick={handleEquals} variant="equal" />
-              <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
-              <Button value="π" onClick={() => handleVariableInput('π')} variant="function" />
-              
               <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
               <Button value="x³" onClick={() => handleVariableInput('x^3')} variant="function" />
-              <Button value="asin" onClick={() => handleVariableInput('asin(')} variant="function" />
-              <Button value="acos" onClick={() => handleVariableInput('acos(')} variant="function" />
-              <Button value="atan" onClick={() => handleVariableInput('atan(')} variant="function" />
+              <Button value="x^n" onClick={() => handleFunction('pow_n')} variant="function" />
               
+              {/* Numbers section in a 3x4 grid */}
+              <div className="col-span-3 row-span-4 grid grid-cols-3 gap-3">
+                <Button value="7" onClick={() => handleNumberInput('7')} />
+                <Button value="8" onClick={() => handleNumberInput('8')} />
+                <Button value="9" onClick={() => handleNumberInput('9')} />
+                <Button value="4" onClick={() => handleNumberInput('4')} />
+                <Button value="5" onClick={() => handleNumberInput('5')} />
+                <Button value="6" onClick={() => handleNumberInput('6')} />
+                <Button value="1" onClick={() => handleNumberInput('1')} />
+                <Button value="2" onClick={() => handleNumberInput('2')} />
+                <Button value="3" onClick={() => handleNumberInput('3')} />
+                <Button value="0" onClick={() => handleNumberInput('0')} />
+                <Button value="." onClick={() => handleNumberInput('.')} />
+                <Button value="±" onClick={handlePlusMinus} variant="function" />
+              </div>
+              
+              {/* Operations column */}
+              <div className="col-span-1 row-span-4 grid grid-cols-1 gap-3">
+                <Button value="÷" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+                <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+                <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+                <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+              </div>
+              
+              {/* Variables */}
+              <Button value="x" onClick={() => handleVariableInput('x')} variant="number" />
+              <Button value="y" onClick={() => handleVariableInput('y')} variant="number" />
+              <Button value="t" onClick={() => handleVariableInput('t')} variant="number" />
+              <Button value="=" onClick={handleEquals} variant="equal" />
+              
+              {/* Trigonometric functions */}
+              <Button value="sin" onClick={() => handleVariableInput('sin(')} variant="function" small />
+              <Button value="cos" onClick={() => handleVariableInput('cos(')} variant="function" small />
+              <Button value="tan" onClick={() => handleVariableInput('tan(')} variant="function" small />
+              <Button value="csc" onClick={() => handleVariableInput('csc(')} variant="function" small />
+              <Button value="sec" onClick={() => handleVariableInput('sec(')} variant="function" small />
+              <Button value="cot" onClick={() => handleVariableInput('cot(')} variant="function" small />
+              
+              {/* Inverse trigonometric functions */}
+              <Button value="asin" onClick={() => handleVariableInput('asin(')} variant="function" small />
+              <Button value="acos" onClick={() => handleVariableInput('acos(')} variant="function" small />
+              <Button value="atan" onClick={() => handleVariableInput('atan(')} variant="function" small />
+              <Button value="acsc" onClick={() => handleVariableInput('acsc(')} variant="function" small />
+              <Button value="asec" onClick={() => handleVariableInput('asec(')} variant="function" small />
+              <Button value="acot" onClick={() => handleVariableInput('acot(')} variant="function" small />
+              
+              {/* Hyperbolic functions */}
+              <Button value="sinh" onClick={() => handleVariableInput('sinh(')} variant="function" small />
+              <Button value="cosh" onClick={() => handleVariableInput('cosh(')} variant="function" small />
+              <Button value="tanh" onClick={() => handleVariableInput('tanh(')} variant="function" small />
+              <Button value="csch" onClick={() => handleVariableInput('csch(')} variant="function" small />
+              <Button value="sech" onClick={() => handleVariableInput('sech(')} variant="function" small />
+              <Button value="coth" onClick={() => handleVariableInput('coth(')} variant="function" small />
+              
+              {/* Logarithmic and exponential functions */}
+              <Button value="ln" onClick={() => handleVariableInput('ln(')} variant="function" />
+              <Button value="log" onClick={() => handleVariableInput('log(')} variant="function" />
+              <Button value="e^x" onClick={() => handleVariableInput('e^')} variant="function" />
+              <Button value="10^x" onClick={() => handleVariableInput('10^')} variant="function" />
+              <Button value="π" onClick={() => handleVariableInput('π')} variant="function" />
+              <Button value="e" onClick={() => handleVariableInput('e')} variant="function" />
+              
+              {/* Calculus operations */}
               <Button value="d/dx" onClick={() => handleCalculusOperation('derivative')} variant="equal" />
               <Button value="∫" onClick={() => handleCalculusOperation('integral')} variant="equal" />
               <Button value="∫∫" onClick={() => handleCalculusOperation('double-integral')} variant="equal" />
@@ -1003,7 +1034,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="⌫" onClick={handleBackspace} variant="function" />
               <Button value="CE" onClick={clearDisplay} variant="function" />
               <Button value="%" onClick={handlePercentage} variant="function" />
-              <Button value="Basic" onClick={() => setShiftMode(false)} variant={!shiftMode ? "equal" : "function"} />
+              <Button value={shiftMode ? "Basic" : "Shift"} onClick={toggleShiftMode} variant={shiftMode ? "equal" : "function"} />
               
               <Button value="MC" onClick={() => handleMemory("MC")} variant="memory" />
               <Button value="MR" onClick={() => handleMemory("MR")} variant="memory" />
@@ -1042,7 +1073,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                   <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
                   <Button value="1/x" onClick={() => handleFunction('reciprocal')} variant="function" />
                   <Button value="±" onClick={handlePlusMinus} variant="function" />
-                  <Button value="Shift" onClick={toggleShiftMode} variant="function" />
+                  <Button value="Basic" onClick={() => setShiftMode(false)} variant="function" />
                 </>
               )}
             </>

@@ -18,8 +18,9 @@ interface ButtonProps {
   className?: string;
   wide?: boolean;
   disabled?: boolean;
-  onInfoClick?: () => void;  // New prop for element info click
-  showInfoButton?: boolean;  // New prop to show info button
+  onInfoClick?: () => void;  // Prop for element info click
+  showInfoButton?: boolean;  // Prop to show info button
+  small?: boolean;  // New prop for smaller buttons
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -31,6 +32,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   onInfoClick,
   showInfoButton = false,
+  small = false,
 }) => {
   const baseClasses = "flex items-center justify-center font-medium rounded-xl transition-all duration-200 select-none active:animate-button-press";
   
@@ -63,6 +65,7 @@ const Button: React.FC<ButtonProps> = ({
         baseClasses,
         variantClasses[variant],
         wide ? "col-span-2" : "",
+        small ? "text-xs" : "",
         disabled && "opacity-50 cursor-not-allowed",
         "h-14 md:h-16 shadow-sm",
         className
