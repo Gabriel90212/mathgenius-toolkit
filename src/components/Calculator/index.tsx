@@ -451,6 +451,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setDisplayValue(symbol);
       setIsNewInput(false);
     } else {
+      // Fixed: Don't add "^" character when adding elements, ensure proper spacing for "+"
       setDisplayValue(displayValue + symbol);
     }
   };
@@ -875,7 +876,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="-4" onClick={() => handleRedoxNotation('reduction-4')} variant="redox" />
                 
                 <div className="col-span-10 grid grid-cols-10 gap-2 mt-2">
-                  {elementSymbols.slice(0, 30).map(element => (
+                  {elementSymbols.map(element => (
                     <Button 
                       key={element} 
                       value={element} 
@@ -913,8 +914,8 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 <Button value="|" onClick={() => handleChemicalInput('|')} variant="operator" />
                 <Button value="Redox" onClick={() => toggleChemistrySubMode('redox')} variant="redox" />
                 
-                <div className="col-span-5 grid grid-cols-5 gap-2">
-                  {elementSymbols.slice(0, 20).map(element => (
+                <div className="col-span-10 h-64 overflow-y-auto grid grid-cols-10 gap-2 border rounded-md p-2">
+                  {elementSymbols.map(element => (
                     <Button 
                       key={element} 
                       value={element} 
@@ -949,6 +950,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="CE" onClick={clearDisplay} variant="function" />
               <Button value="%" onClick={handlePercentage} variant="function" />
               <Button value="^" onClick={handleExponentInput} variant="operator" />
+              <Button value="Basic" onClick={toggleCalculusMode} variant="equal" />
               
               <Button value="var" onClick={toggleVariable} variant="function" />
               <Button value="(" onClick={() => handleVariableInput('(')} variant="function" />
@@ -959,31 +961,37 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="y" onClick={() => handleVariableInput('y')} variant="number" />
               <Button value="sin" onClick={() => handleVariableInput('sin(')} variant="function" />
               <Button value="cos" onClick={() => handleVariableInput('cos(')} variant="function" />
+              <Button value="tan" onClick={() => handleVariableInput('tan(')} variant="function" />
               
               <Button value="7" onClick={() => handleNumberInput('7')} />
               <Button value="8" onClick={() => handleNumberInput('8')} />
               <Button value="9" onClick={() => handleNumberInput('9')} />
               <Button value="÷" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+              <Button value="ln" onClick={() => handleVariableInput('ln(')} variant="function" />
               
               <Button value="4" onClick={() => handleNumberInput('4')} />
               <Button value="5" onClick={() => handleNumberInput('5')} />
               <Button value="6" onClick={() => handleNumberInput('6')} />
               <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+              <Button value="log" onClick={() => handleVariableInput('log(')} variant="function" />
               
               <Button value="1" onClick={() => handleNumberInput('1')} />
               <Button value="2" onClick={() => handleNumberInput('2')} />
               <Button value="3" onClick={() => handleNumberInput('3')} />
               <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+              <Button value="e^x" onClick={() => handleVariableInput('e^')} variant="function" />
               
               <Button value="0" onClick={() => handleNumberInput('0')} />
               <Button value="." onClick={() => handleNumberInput('.')} />
               <Button value="=" onClick={handleEquals} variant="equal" />
               <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+              <Button value="π" onClick={() => handleVariableInput('π')} variant="function" />
               
               <Button value="x²" onClick={() => handleFunction('pow')} variant="function" />
               <Button value="x³" onClick={() => handleVariableInput('x^3')} variant="function" />
-              <Button value="e^x" onClick={() => handleVariableInput('e^')} variant="function" />
-              <Button value="ln" onClick={() => handleVariableInput('ln(')} variant="function" />
+              <Button value="asin" onClick={() => handleVariableInput('asin(')} variant="function" />
+              <Button value="acos" onClick={() => handleVariableInput('acos(')} variant="function" />
+              <Button value="atan" onClick={() => handleVariableInput('atan(')} variant="function" />
               
               <Button value="d/dx" onClick={() => handleCalculusOperation('derivative')} variant="equal" />
               <Button value="∫" onClick={() => handleCalculusOperation('integral')} variant="equal" />
@@ -995,6 +1003,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="⌫" onClick={handleBackspace} variant="function" />
               <Button value="CE" onClick={clearDisplay} variant="function" />
               <Button value="%" onClick={handlePercentage} variant="function" />
+              <Button value="Basic" onClick={() => setShiftMode(false)} variant={!shiftMode ? "equal" : "function"} />
               
               <Button value="MC" onClick={() => handleMemory("MC")} variant="memory" />
               <Button value="MR" onClick={() => handleMemory("MR")} variant="memory" />
