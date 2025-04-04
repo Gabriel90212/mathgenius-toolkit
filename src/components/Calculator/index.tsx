@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -838,4 +839,221 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
 
               <Button value="4" onClick={() => handleNumberInput('4')} />
               <Button value="5" onClick={() => handleNumberInput('5')} />
-              <Button value="6" onClick={() =>
+              <Button value="6" onClick={() => handleNumberInput('6')} />
+              <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+
+              <Button value="1" onClick={() => handleNumberInput('1')} />
+              <Button value="2" onClick={() => handleNumberInput('2')} />
+              <Button value="3" onClick={() => handleNumberInput('3')} />
+              <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+
+              <Button value="0" onClick={() => handleNumberInput('0')} wide />
+              <Button value="." onClick={() => handleNumberInput('.')} />
+              <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+            </>
+          ) : calculusMode ? (
+            <>
+              <Button value="⌫" onClick={handleBackspace} variant="function" />
+              <Button value="%" onClick={handlePercentage} variant="function" />
+              <Button value="±" onClick={handlePlusMinus} variant="function" />
+              <Button value="^" onClick={handleExponentInput} variant="function" />
+              <Button value="(" onClick={() => handleVariableInput('(')} variant="function" />
+              <Button value=")" onClick={() => handleVariableInput(')')} variant="function" />
+
+              <Button value="x" onClick={() => handleVariableInput('x')} variant="function" />
+              <Button value="y" onClick={() => handleVariableInput('y')} variant="function" />
+              <Button value="t" onClick={() => handleVariableInput('t')} variant="function" />
+              <Button value="var" onClick={toggleVariable} variant="function" />
+
+              <Button value="sin" onClick={() => handleVariableInput('sin(')} variant="function" />
+              <Button value="cos" onClick={() => handleVariableInput('cos(')} variant="function" />
+              <Button value="tan" onClick={() => handleVariableInput('tan(')} variant="function" />
+              <Button value="log" onClick={() => handleVariableInput('log(')} variant="function" />
+
+              <Button value="d/dx" onClick={() => handleCalculusOperation('derivative')} variant="function" />
+              <Button value="∫" onClick={() => handleCalculusOperation('integral')} variant="function" />
+              <Button value="∫∫" onClick={() => handleCalculusOperation('double-integral')} variant="function" />
+              <Button value="∫∫∫" onClick={() => handleCalculusOperation('triple-integral')} variant="function" />
+
+              <Button value="7" onClick={() => handleNumberInput('7')} />
+              <Button value="8" onClick={() => handleNumberInput('8')} />
+              <Button value="9" onClick={() => handleNumberInput('9')} />
+              <Button value="/" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+
+              <Button value="4" onClick={() => handleNumberInput('4')} />
+              <Button value="5" onClick={() => handleNumberInput('5')} />
+              <Button value="6" onClick={() => handleNumberInput('6')} />
+              <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+
+              <Button value="1" onClick={() => handleNumberInput('1')} />
+              <Button value="2" onClick={() => handleNumberInput('2')} />
+              <Button value="3" onClick={() => handleNumberInput('3')} />
+              <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+
+              <Button value="0" onClick={() => handleNumberInput('0')} wide />
+              <Button value="." onClick={() => handleNumberInput('.')} />
+              <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+            </>
+          ) : chemistryMode ? (
+            <>
+              <Button value="⌫" onClick={handleBackspace} variant="function" />
+              <Button 
+                value="↔" 
+                onClick={() => handleChemicalInput(' ↔ ')} 
+                variant="operator" 
+              />
+              <Button 
+                value="→" 
+                onClick={() => handleChemicalInput(' → ')} 
+                variant="operator" 
+              />
+              
+              {/* Regular plus button for chemical equations with enhanced visibility */}
+              <Button 
+                value="+" 
+                onClick={() => handleChemicalInput(' + ')} 
+                variant="sum" 
+              />
+              
+              {/* Superscript plus button for ion notations */}
+              <Button 
+                value="+" 
+                onClick={() => handleSuperscriptInput('+')} 
+                variant="superscript" 
+                small 
+              />
+
+              {chemistrySubMode === 'redox' && (
+                <>
+                  <Button 
+                    value="e⁻" 
+                    onClick={() => handleRedoxNotation('e-')} 
+                    variant="redox" 
+                  />
+                  <Button 
+                    value="⁺¹" 
+                    onClick={() => handleRedoxNotation('oxidation-1')} 
+                    variant="redox" 
+                  />
+                  <Button 
+                    value="⁺²" 
+                    onClick={() => handleRedoxNotation('oxidation-2')} 
+                    variant="redox" 
+                  />
+                  <Button 
+                    value="⁺³" 
+                    onClick={() => handleRedoxNotation('oxidation-3')} 
+                    variant="redox" 
+                  />
+                  <Button 
+                    value="⁻¹" 
+                    onClick={() => handleRedoxNotation('reduction-1')} 
+                    variant="redox" 
+                  />
+                  <Button 
+                    value="⁻²" 
+                    onClick={() => handleRedoxNotation('reduction-2')} 
+                    variant="redox" 
+                  />
+                  <Button 
+                    value="⁻³" 
+                    onClick={() => handleRedoxNotation('reduction-3')} 
+                    variant="redox" 
+                  />
+                </>
+              )}
+              
+              {/* Common elements */}
+              {commonElements.map(element => (
+                <Button 
+                  key={element} 
+                  value={element} 
+                  onClick={() => handleElementSelect(element)} 
+                  variant="element"
+                  showInfoButton={element.length <= 2 && !element.match(/\d/)}
+                  onInfoClick={() => handleElementInfoClick(element)}
+                />
+              ))}
+              
+              {/* Subscripts */}
+              <Button value="₁" onClick={() => handleSubscriptInput(1)} variant="function" />
+              <Button value="₂" onClick={() => handleSubscriptInput(2)} variant="function" />
+              <Button value="₃" onClick={() => handleSubscriptInput(3)} variant="function" />
+              <Button value="₄" onClick={() => handleSubscriptInput(4)} variant="function" />
+              
+              <Button value="(" onClick={() => handleChemicalInput('(')} variant="function" />
+              <Button value=")" onClick={() => handleChemicalInput(')')} variant="function" />
+              <Button value="[" onClick={() => handleChemicalInput('[')} variant="function" />
+              <Button value="]" onClick={() => handleChemicalInput(']')} variant="function" />
+              
+              <Button 
+                value={chemistrySubMode === 'balance' ? "Balance" : "Calculate"}
+                onClick={() => handleChemistryOperation(chemistrySubMode === 'balance' ? 'balance' : 'stoichiometry')} 
+                variant="equal" 
+                wide 
+              />
+
+              <Button value="=" onClick={handleEquals} variant="equal" />
+            </>
+          ) : (
+            <>
+              <Button value="MS" onClick={() => handleMemory("MS")} variant="memory" />
+              <Button value="M+" onClick={() => handleMemory("M+")} variant="memory" />
+              <Button value="M-" onClick={() => handleMemory("M-")} variant="memory" />
+
+              <Button value={shiftMode ? "2ⁿᵈ" : "2ⁿᵈ"} onClick={toggleShiftMode} variant={shiftMode ? "equal" : "function"} />
+              <Button value="⌫" onClick={handleBackspace} variant="function" />
+              <Button value="%" onClick={handlePercentage} variant="function" />
+              <Button value="÷" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
+
+              <Button value="MC" onClick={() => handleMemory("MC")} variant="memory" />
+              <Button value="7" onClick={() => handleNumberInput('7')} />
+              <Button value="8" onClick={() => handleNumberInput('8')} />
+              <Button value="9" onClick={() => handleNumberInput('9')} />
+
+              <Button value="MR" onClick={() => handleMemory("MR")} variant="memory" />
+              <Button value="4" onClick={() => handleNumberInput('4')} />
+              <Button value="5" onClick={() => handleNumberInput('5')} />
+              <Button value="6" onClick={() => handleNumberInput('6')} />
+
+              {shiftMode ? (
+                <>
+                  <Button value="ln" onClick={() => handleFunction("ln")} variant="function" />
+                  <Button value="sin" onClick={() => handleFunction("sin")} variant="function" />
+                  <Button value="cos" onClick={() => handleFunction("cos")} variant="function" />
+                  <Button value="tan" onClick={() => handleFunction("tan")} variant="function" />
+
+                  <Button value="log" onClick={() => handleFunction("log10")} variant="function" />
+                  <Button value="1" onClick={() => handleNumberInput('1')} />
+                  <Button value="2" onClick={() => handleNumberInput('2')} />
+                  <Button value="3" onClick={() => handleNumberInput('3')} />
+
+                  <Button value="√" onClick={() => handleFunction("sqrt")} variant="function" />
+                  <Button value="±" onClick={handlePlusMinus} variant="function" />
+                  <Button value="0" onClick={() => handleNumberInput('0')} />
+                  <Button value="." onClick={() => handleNumberInput('.')} />
+                </>
+              ) : (
+                <>
+                  <Button value="×" onClick={() => handleOperation(OPERATIONS.MULTIPLY)} variant="operator" />
+                  <Button value="1" onClick={() => handleNumberInput('1')} />
+                  <Button value="2" onClick={() => handleNumberInput('2')} />
+                  <Button value="3" onClick={() => handleNumberInput('3')} />
+
+                  <Button value="-" onClick={() => handleOperation(OPERATIONS.SUBTRACT)} variant="operator" />
+                  <Button value="0" onClick={() => handleNumberInput('0')} wide />
+                  <Button value="." onClick={() => handleNumberInput('.')} />
+                </>
+              )}
+
+              <Button value="+" onClick={() => handleOperation(OPERATIONS.ADD)} variant="operator" />
+              <Button value="=" onClick={handleEquals} variant="equal" wide={shiftMode} />
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
+export default Calculator;
