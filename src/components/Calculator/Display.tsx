@@ -19,6 +19,11 @@ const Display: React.FC<DisplayProps> = ({ value, expression, className }) => {
     if (text.includes('^')) {
       return formatExponents(text);
     }
+
+    // Special case for electron configurations (like 4s¹)
+    if (/\d[spdf]\d/.test(text)) {
+      return formatElectronConfiguration(text);
+    }
     
     // This regex matches element symbols, their subscripts, and superscripts
     const parts = text.split(/([A-Z][a-z]?)(\d*)([\+\-\d]*)/g).filter(Boolean);
@@ -30,6 +35,20 @@ const Display: React.FC<DisplayProps> = ({ value, expression, className }) => {
       }
       // If the part starts with + or - and follows an element symbol (oxidation state)
       else if (/^[\+\-]\d*$/.test(part) && index > 0) {
+        return <sup key={index}>{part}</sup>;
+      }
+      return part;
+    });
+  };
+
+  // Format electron configurations with proper superscripts
+  const formatElectronConfiguration = (text: string): React.ReactNode => {
+    // This regex will find patterns like "1s2" and split them into orbital and electron count
+    const parts = text.split(/(\d[spdf])(\d+)/g).filter(Boolean);
+    
+    return parts.map((part, index) => {
+      // If the part matches a digit pattern and follows an orbital
+      if (/^\d+$/.test(part) && index > 0 && /^\d[spdf]$/.test(parts[index - 1])) {
         return <sup key={index}>{part}</sup>;
       }
       return part;

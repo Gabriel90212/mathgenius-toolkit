@@ -11,7 +11,9 @@ type ButtonVariant =
   | "redox"
   | "element"
   | "sum"  
-  | "superscript"; // Added new "superscript" variant for ion notations
+  | "superscript"
+  | "regular-number"  // Added new variant for regular numbers in chemical formulas
+  | "electron-config"; // Added new variant for electron configurations
 
 interface ButtonProps {
   value: string;
@@ -23,6 +25,7 @@ interface ButtonProps {
   onInfoClick?: () => void;
   showInfoButton?: boolean;
   small?: boolean;
+  configSuperscript?: string; // Added property for electron configuration superscripts
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -35,6 +38,7 @@ const Button: React.FC<ButtonProps> = ({
   onInfoClick,
   showInfoButton = false,
   small = false,
+  configSuperscript,
 }) => {
   const baseClasses = "flex items-center justify-center font-medium rounded-xl transition-all duration-200 select-none active:animate-button-press";
   
@@ -46,8 +50,10 @@ const Button: React.FC<ButtonProps> = ({
     memory: "bg-calculator-button-memory text-primary hover:bg-opacity-80",
     redox: "bg-calculator-button-redox text-primary-foreground hover:bg-opacity-80 font-semibold",
     element: "bg-calculator-button-number text-foreground hover:bg-opacity-80 relative",
-    sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-bold text-3xl", // Increased text size to text-3xl and made it bold
-    superscript: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 relative" // New variant for superscript notation
+    sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-bold text-3xl",
+    superscript: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 relative",
+    "regular-number": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border-2 border-primary/30", // Highlighted border for chemical number
+    "electron-config": "bg-calculator-button-function text-primary hover:bg-opacity-80 relative" // Style for electron configuration
   };
 
   const handleClick = () => {
@@ -90,6 +96,9 @@ const Button: React.FC<ButtonProps> = ({
       )}
       {variant === "superscript" && (
         <span className="absolute -top-1 -right-1 text-xs">⁺</span>
+      )}
+      {variant === "electron-config" && configSuperscript && (
+        <span className="absolute -top-1 -right-1 text-xs">{configSuperscript}</span>
       )}
     </button>
   );

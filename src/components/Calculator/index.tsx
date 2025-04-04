@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 import Display from "./Display";
@@ -70,6 +69,9 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [activeTab, setActiveTab] = useState<string>("calculator");
   const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
   const [chemistrySubMode, setChemistrySubMode] = useState<'balance' | 'stoichiometry' | 'solutions' | 'redox'>('balance');
+  const [showFullElementTable, setShowFullElementTable] = useState<boolean>(false);
+  const [elementCategory, setElementCategory] = useState<string>("common");
+  const [electronConfigMode, setElectronConfigMode] = useState<boolean>(false);
 
   const elementSymbols = getAllElementSymbols();
   const elementGroups = getElementGroups();
@@ -452,7 +454,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       setDisplayValue(symbol);
       setIsNewInput(false);
     } else {
-      // Fixed: Don't add "^" character when adding elements, ensure proper spacing for "+"
       setDisplayValue(displayValue + symbol);
     }
   };
@@ -467,7 +468,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     }
   };
 
-  // Enhance handleSuperscriptInput to better handle superscript plus and other characters
   const handleSuperscriptInput = (symbol: string) => {
     if (isNewInput) {
       setDisplayValue(symbol);
@@ -587,6 +587,45 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     };
     
     toast.info(instructions[mode]);
+  };
+
+  const handleRegularNumber = (num: string) => {
+    if (isNewInput) {
+      setDisplayValue(num);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + num);
+    }
+  };
+
+  const handleElectronConfigInput = (orbital: string, electrons?: string) => {
+    if (isNewInput) {
+      setDisplayValue(orbital);
+      setIsNewInput(false);
+    } else {
+      setDisplayValue(displayValue + orbital);
+    }
+  };
+
+  const toggleElectronConfigMode = () => {
+    setElectronConfigMode(!electronConfigMode);
+    if (!electronConfigMode) {
+      toast.info("Electron configuration mode - build electron configurations");
+    }
+  };
+
+  const toggleElementTable = () => {
+    setShowFullElementTable(!showFullElementTable);
+    if (!showFullElementTable) {
+      toast.info("Showing full periodic table elements");
+    } else {
+      toast.info("Showing common elements only");
+    }
+  };
+
+  const selectElementCategory = (category: string) => {
+    setElementCategory(category);
+    toast.info(`Showing ${category} elements`);
   };
 
   useEffect(() => {
@@ -725,6 +764,21 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         </div>
       )}
       
+      {chemistryMode && (
+        <div className="mt-4 mb-2">
+          <Tabs defaultValue="common" value={elementCategory} onValueChange={selectElementCategory} className="w-full">
+            <TabsList className="grid w-full grid-cols-6 text-xs">
+              <TabsTrigger value="common">Common</TabsTrigger>
+              <TabsTrigger value="metals">Metals</TabsTrigger>
+              <TabsTrigger value="nonmetals">Non-Metals</TabsTrigger>
+              <TabsTrigger value="noble">Noble Gases</TabsTrigger>
+              <TabsTrigger value="transition">Transition</TabsTrigger>
+              <TabsTrigger value="all">All Elements</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
+      
       {activeTab === "calculator" || (!physicsMode && !showPhysicsFormulas) ? (
         <div className={cn(
           "grid gap-3 mt-4",
@@ -835,7 +889,7 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
               <Button value="7" onClick={() => handleNumberInput('7')} />
               <Button value="8" onClick={() => handleNumberInput('8')} />
               <Button value="9" onClick={() => handleNumberInput('9')} />
-              <Button value="/" onClick={() => handlePhysicsInput('/')} variant="operator" />
+              <Button value="/" onClick={() => handleOperation(OPERATIONS.DIVIDE)} variant="operator" />
 
               <Button value="4" onClick={() => handleNumberInput('4')} />
               <Button value="5" onClick={() => handleNumberInput('5')} />
@@ -908,14 +962,12 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 variant="operator" 
               />
               
-              {/* Regular plus button for chemical equations with enhanced visibility */}
               <Button 
                 value="+" 
                 onClick={() => handleChemicalInput(' + ')} 
                 variant="sum" 
               />
               
-              {/* Superscript plus button for ion notations */}
               <Button 
                 value="+" 
                 onClick={() => handleSuperscriptInput('+')} 
@@ -963,7 +1015,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 </>
               )}
               
-              {/* Common elements */}
               {commonElements.map(element => (
                 <Button 
                   key={element} 
@@ -975,7 +1026,6 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
                 />
               ))}
               
-              {/* Subscripts */}
               <Button value="₁" onClick={() => handleSubscriptInput(1)} variant="function" />
               <Button value="₂" onClick={() => handleSubscriptInput(2)} variant="function" />
               <Button value="₃" onClick={() => handleSubscriptInput(3)} variant="function" />
