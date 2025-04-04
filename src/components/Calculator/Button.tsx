@@ -10,7 +10,8 @@ type ButtonVariant =
   | "memory"
   | "redox"
   | "element"
-  | "sum";  // Added new "sum" variant
+  | "sum"  
+  | "superscript"; // Added new "superscript" variant for ion notations
 
 interface ButtonProps {
   value: string;
@@ -19,9 +20,9 @@ interface ButtonProps {
   className?: string;
   wide?: boolean;
   disabled?: boolean;
-  onInfoClick?: () => void;  // Prop for element info click
-  showInfoButton?: boolean;  // Prop to show info button
-  small?: boolean;  // New prop for smaller buttons
+  onInfoClick?: () => void;
+  showInfoButton?: boolean;
+  small?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -45,7 +46,8 @@ const Button: React.FC<ButtonProps> = ({
     memory: "bg-calculator-button-memory text-primary hover:bg-opacity-80",
     redox: "bg-calculator-button-redox text-primary-foreground hover:bg-opacity-80 font-semibold",
     element: "bg-calculator-button-number text-foreground hover:bg-opacity-80 relative",
-    sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-bold text-3xl" // Increased text size to text-3xl and made it bold
+    sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-bold text-3xl", // Increased text size to text-3xl and made it bold
+    superscript: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 relative" // New variant for superscript notation
   };
 
   const handleClick = () => {
@@ -85,6 +87,9 @@ const Button: React.FC<ButtonProps> = ({
         >
           i
         </span>
+      )}
+      {variant === "superscript" && (
+        <span className="absolute -top-1 -right-1 text-xs">⁺</span>
       )}
     </button>
   );
