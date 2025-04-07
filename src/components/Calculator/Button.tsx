@@ -14,7 +14,7 @@ type ButtonVariant =
   | "superscript"
   | "regular-number"  
   | "electron-config"
-  | "formula"; // Added new variant for physics formulas
+  | "formula"; 
 
 interface ButtonProps {
   value: string;
@@ -27,8 +27,9 @@ interface ButtonProps {
   showInfoButton?: boolean;
   small?: boolean;
   configSuperscript?: string;
-  formula?: string; // Added property for storing complete formula
-  formulaVariables?: string[]; // Added property for formula variables
+  formula?: string; 
+  formulaVariables?: string[]; 
+  openFormulaDialog?: (formula: string) => void; // Add a new prop for opening the formula dialog
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -44,6 +45,7 @@ const Button: React.FC<ButtonProps> = ({
   configSuperscript,
   formula,
   formulaVariables,
+  openFormulaDialog,
 }) => {
   const baseClasses = "flex items-center justify-center font-medium rounded-xl transition-all duration-200 select-none active:animate-button-press";
   
@@ -59,12 +61,17 @@ const Button: React.FC<ButtonProps> = ({
     superscript: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 relative",
     "regular-number": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border-2 border-primary/30",
     "electron-config": "bg-calculator-button-function text-primary hover:bg-opacity-80 relative",
-    "formula": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border border-primary/30 text-xs text-left px-2" // Added style for formula buttons
+    "formula": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border border-primary/30 text-xs text-left px-2" 
   };
 
   const handleClick = () => {
     if (!disabled) {
-      onClick(formula || value);
+      if (variant === "formula" && formula && openFormulaDialog) {
+        // Open the formula dialog instead of just inserting the formula text
+        openFormulaDialog(formula);
+      } else {
+        onClick(formula || value);
+      }
     }
   };
 

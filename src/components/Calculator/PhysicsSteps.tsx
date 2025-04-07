@@ -75,6 +75,11 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
     }
   };
 
+  const clearForm = () => {
+    setVariables({});
+    setTargetVariable(undefined);
+  };
+
   // Extract variables from formula if available
   const extractVariables = () => {
     if (!formula) return [];
@@ -123,14 +128,23 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
                     </div>
                   ))}
                 </div>
-                <Button 
-                  onClick={handleCalculateClick} 
-                  className="w-full"
-                  variant="default"
-                  size="sm"
-                >
-                  Calculate {targetVariable ? `for ${targetVariable}` : 'Result'}
-                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    onClick={handleCalculateClick} 
+                    className="flex-1"
+                    variant="default"
+                    size="sm"
+                  >
+                    Calculate {targetVariable ? `for ${targetVariable}` : 'Result'}
+                  </Button>
+                  <Button
+                    onClick={clearForm}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Clear
+                  </Button>
+                </div>
               </div>
             )}
           </div>
