@@ -80,6 +80,41 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const elementGroups = getElementGroups();
   const commonElements = getCommonElements();
 
+  // Adding the missing toggleShiftMode function
+  const toggleShiftMode = () => {
+    setShiftMode(!shiftMode);
+  };
+
+  // Adding the missing handleMemory function
+  const handleMemory = (operation: string) => {
+    const currentValue = parseFloat(displayValue);
+    
+    switch(operation) {
+      case "MS":
+        setMemory(currentValue);
+        toast.info("Value stored in memory");
+        break;
+      case "M+":
+        setMemory(memory + currentValue);
+        toast.info("Value added to memory");
+        break;
+      case "M-":
+        setMemory(memory - currentValue);
+        toast.info("Value subtracted from memory");
+        break;
+      case "MR":
+        setDisplayValue(formatNumber(memory));
+        setIsNewInput(true);
+        break;
+      case "MC":
+        setMemory(0);
+        toast.info("Memory cleared");
+        break;
+      default:
+        break;
+    }
+  };
+
   const handleNumberInput = (value: string) => {
     if (value === "." && displayValue.includes(".")) {
       return;
@@ -443,7 +478,8 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
       steps: [
         { description: "Original formula", expression: formula },
         { description: "Solving for", expression: solveFor }
-      ]
+      ],
+      input: input // Add the required input property
     };
     
     variableInputs.forEach(input => {
