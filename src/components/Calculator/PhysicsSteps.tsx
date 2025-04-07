@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface PhysicsStepsProps {
   result: PhysicsResult;
@@ -54,6 +55,21 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
   };
 
   const handleCalculateClick = () => {
+    if (!targetVariable) {
+      toast.error("Please select a variable to solve for");
+      return;
+    }
+
+    // Check that all other variables have values
+    const missingVariables = Object.entries(variables)
+      .filter(([key, value]) => key !== targetVariable && !value)
+      .map(([key]) => key);
+
+    if (missingVariables.length > 0) {
+      toast.error(`Please enter values for: ${missingVariables.join(', ')}`);
+      return;
+    }
+
     if (onCalculate) {
       onCalculate(variables, targetVariable);
     }
@@ -70,39 +86,50 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
   const formulaVariables = extractVariables();
 
   return (
-    <Card className={cn("mt-4 overflow-auto max-h-96", className)}>
+    <Card className={cn("mt-4 overflow-auto max-h-[500px]", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium">{getTitle()}</CardTitle>
       </CardHeader>
       <CardContent className="text-sm">
         {formula && (
-          <div className="mb-4 p-2 bg-muted/30 rounded-md">
-            <div className="font-medium mb-2">Formula: {formula}</div>
+          <div className="mb-4 p-3 bg-muted/30 rounded-md border border-primary/20">
+            <div className="font-medium mb-3 text-center text-primary">{formula}</div>
             
             {showVariableInputs && (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {formulaVariables.map(variable => (
-                    <div key={variable} className="flex items-center space-x-2">
-                      <Button 
-                        variant={targetVariable === variable ? "secondary" : "outline"} 
-                        size="sm"
-                        onClick={() => handleTargetVariableChange(variable)}
-                      >
-                        {variable}
-                      </Button>
-                      <Input
-                        placeholder={`Value for ${variable}`}
-                        value={variables[variable] || ''}
-                        onChange={(e) => handleVariableChange(variable, e.target.value)}
-                        disabled={targetVariable === variable}
-                        className="text-xs"
-                      />
+                    <div key={variable} className="flex flex-col space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant={targetVariable === variable ? "secondary" : "outline"} 
+                          size="sm"
+                          onClick={() => handleTargetVariableChange(variable)}
+                          className="w-12 flex-shrink-0"
+                        >
+                          {variable}
+                        </Button>
+                        <Input
+                          placeholder={`Value for ${variable}`}
+                          value={variables[variable] || ''}
+                          onChange={(e) => handleVariableChange(variable, e.target.value)}
+                          disabled={targetVariable === variable}
+                          className={cn("text-sm", targetVariable === variable && "bg-muted")}
+                        />
+                      </div>
+                      {targetVariable === variable && (
+                        <p className="text-xs text-muted-foreground pl-14">Solving for this variable</p>
+                      )}
                     </div>
                   ))}
                 </div>
-                <Button onClick={handleCalculateClick} className="w-full">
-                  Calculate {targetVariable ? `for ${targetVariable}` : ''}
+                <Button 
+                  onClick={handleCalculateClick} 
+                  className="w-full"
+                  variant="default"
+                  size="sm"
+                >
+                  Calculate {targetVariable ? `for ${targetVariable}` : 'Result'}
                 </Button>
               </div>
             )}
@@ -110,15 +137,17 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
         )}
         
         {result.error ? (
-          <div className="text-red-500">{result.error}</div>
+          <div className="text-red-500 p-2 bg-red-50 rounded-md">{result.error}</div>
         ) : (
           <>
-            <div className="font-semibold mb-2">Result: {result.result}</div>
-            <div className="space-y-2">
-              {result.steps.map((step, index) => (
-                <div key={index} className="border-b border-border pb-2 last:border-0 last:pb-0">
+            <div className="font-semibold mb-3 p-2 bg-primary/10 rounded-md flex justify-between">
+              <span>Result:</span> <span className="font-mono">{result.result}</span>
+            </div>
+            <div className="space-y-3 mt-4">
+              {result.steps && result.steps.map((step, index) => (
+                <div key={index} className="border-b border-border pb-3 last:border-0 last:pb-0">
                   <div className="font-medium">{step.description}</div>
-                  <div className="font-mono bg-muted/50 p-1 rounded mt-1">
+                  <div className="font-mono bg-muted/50 p-2 rounded mt-1 overflow-x-auto">
                     {step.expression}
                   </div>
                 </div>
