@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PhysicsResult, PhysicsOperation } from "./CalculatorUtils";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +27,22 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
   const [variables, setVariables] = useState<Record<string, string>>(initialVariables || {});
   const [targetVariable, setTargetVariable] = useState<string | undefined>(undefined);
   const [showVariableInputs, setShowVariableInputs] = useState<boolean>(!!formula);
+
+  // When formula changes, initialize the variables
+  useEffect(() => {
+    if (formula) {
+      setShowVariableInputs(true);
+      // Initialize variables if not already set
+      if (!initialVariables || Object.keys(initialVariables).length === 0) {
+        const extractedVars = extractVariables();
+        const newVariables: Record<string, string> = {};
+        extractedVars.forEach(v => {
+          newVariables[v] = '';
+        });
+        setVariables(newVariables);
+      }
+    }
+  }, [formula]);
 
   const getTitle = () => {
     switch (operation) {

@@ -29,7 +29,7 @@ interface ButtonProps {
   configSuperscript?: string;
   formula?: string; 
   formulaVariables?: string[]; 
-  openFormulaDialog?: (formula: string) => void; // Add a new prop for opening the formula dialog
+  openFormulaDialog?: (formula: string) => void;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -61,7 +61,7 @@ const Button: React.FC<ButtonProps> = ({
     superscript: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 relative",
     "regular-number": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border-2 border-primary/30",
     "electron-config": "bg-calculator-button-function text-primary hover:bg-opacity-80 relative",
-    "formula": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border border-primary/30 text-xs text-left px-2" 
+    "formula": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border border-primary/30 text-xs text-left px-2 cursor-pointer hover:bg-primary/10" 
   };
 
   const handleClick = () => {
