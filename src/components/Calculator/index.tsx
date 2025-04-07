@@ -72,6 +72,9 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
   const [showFullElementTable, setShowFullElementTable] = useState<boolean>(false);
   const [elementCategory, setElementCategory] = useState<string>("common");
   const [electronConfigMode, setElectronConfigMode] = useState<boolean>(false);
+  const [currentFormula, setCurrentFormula] = useState<string | null>(null);
+  const [formulaVariables, setFormulaVariables] = useState<Record<string, string>>({});
+  const [solveForVariable, setSolveForVariable] = useState<string | undefined>(undefined);
 
   const elementSymbols = getAllElementSymbols();
   const elementGroups = getElementGroups();
@@ -364,22 +367,106 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
     setDisplayValue(formula);
     setIsNewInput(true);
     setActiveTab("calculator");
-  };
-
-  const toggleShiftMode = () => {
-    setShiftMode(!shiftMode);
-  };
-
-  const handleMemory = (operation: string) => {
-    const currentValue = parseFloat(displayValue);
+    setCurrentFormula(formula);
     
-    switch (operation) {
-      case "MC": setMemory(0); toast.info("Memory cleared"); break;
-      case "MR": setDisplayValue(formatNumber(memory)); setIsNewInput(true); break;
-      case "M+": setMemory(memory + currentValue); toast.info("Added to memory"); setIsNewInput(true); break;
-      case "M-": setMemory(memory - currentValue); toast.info("Subtracted from memory"); setIsNewInput(true); break;
-      case "MS": setMemory(currentValue); toast.info("Stored in memory"); setIsNewInput(true); break;
+    const variables: Record<string, string> = {};
+    const matches = formula.match(/[a-zA-Z]+/g) || [];
+    const uniqueVars = [...new Set(matches)];
+    uniqueVars.forEach(variable => {
+      variables[variable] = '';
+    });
+    
+    setFormulaVariables(variables);
+    
+    toast.info("Enter values for variables and choose one to solve for");
+  };
+
+  const handleCalculateFormula = (variables: Record<string, string>, targetVariable?: string) => {
+    try {
+      if (!currentFormula) {
+        toast.error("No formula selected");
+        return;
+      }
+      
+      if (!targetVariable) {
+        toast.error("Please select a variable to solve for");
+        return;
+      }
+      
+      for (const variable in variables) {
+        if (variable !== targetVariable && !variables[variable]) {
+          toast.error(`Please enter a value for ${variable}`);
+          return;
+        }
+      }
+      
+      const inputs = Object.entries(variables)
+        .filter(([v]) => v !== targetVariable)
+        .map(([variable, value]) => `${variable}=${value}`)
+        .join('|');
+      
+      const calculationString = `${currentFormula}|${targetVariable}|${inputs}`;
+      setDisplayValue(calculationString);
+      
+      let operation: PhysicsOperation = 'kinematics';
+      
+      if (currentFormula.includes('F=ma') || currentFormula.includes('KE=') || currentFormula.includes('PE=')) {
+        operation = 'dynamics';
+      } else if (currentFormula.includes('V=IR') || currentFormula.includes('R1+R2')) {
+        operation = 'circuits';
+      } else if (currentFormula.includes('s') && (currentFormula.includes('transform') || currentFormula.includes('L{'))) {
+        operation = 'laplace';
+      }
+      
+      const result = calculatePhysicsFormula(calculationString, operation, targetVariable);
+      
+      setPhysicsResult(result);
+      setPhysicsOperation(operation);
+      
+      const historyItem = `${targetVariable} in ${currentFormula} = ${result.result}`;
+      setHistory([historyItem, ...history].slice(0, 10));
+      
+    } catch (error) {
+      toast.error("Physics calculation error: " + (error instanceof Error ? error.message : "Unknown error"));
+      setPhysicsResult(null);
     }
+  };
+
+  const calculatePhysicsFormula = (input: string, operation: PhysicsOperation, targetVariable: string): PhysicsResult => {
+    const parts = input.split('|');
+    const formula = parts[0];
+    const solveFor = parts[1];
+    const variableInputs = parts.slice(2);
+    
+    const result: PhysicsResult = {
+      result: "",
+      steps: [
+        { description: "Original formula", expression: formula },
+        { description: "Solving for", expression: solveFor }
+      ]
+    };
+    
+    variableInputs.forEach(input => {
+      const [variable, value] = input.split('=');
+      result.steps.push({
+        description: `Substituting ${variable}`,
+        expression: `${variable} = ${value}`
+      });
+    });
+    
+    result.steps.push({
+      description: "Rearranging formula to isolate " + solveFor,
+      expression: `${solveFor} = ...`
+    });
+    
+    result.result = "Calculated value of " + solveFor;
+    
+    result.steps.push({
+      description: "Final calculation",
+      expression: `${solveFor} = ${result.result}`
+    });
+    
+    return result;
   };
 
   const handlePlusMinus = () => {
@@ -687,6 +774,9 @@ const Calculator: React.FC<CalculatorProps> = ({ className }) => {
         <PhysicsSteps 
           result={physicsResult} 
           operation={physicsOperation} 
+          formula={currentFormula || undefined}
+          variables={formulaVariables}
+          onCalculate={handleCalculateFormula}
         />
       )}
       

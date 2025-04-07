@@ -12,8 +12,9 @@ type ButtonVariant =
   | "element"
   | "sum"  
   | "superscript"
-  | "regular-number"  // Added new variant for regular numbers in chemical formulas
-  | "electron-config"; // Added new variant for electron configurations
+  | "regular-number"  
+  | "electron-config"
+  | "formula"; // Added new variant for physics formulas
 
 interface ButtonProps {
   value: string;
@@ -25,7 +26,9 @@ interface ButtonProps {
   onInfoClick?: () => void;
   showInfoButton?: boolean;
   small?: boolean;
-  configSuperscript?: string; // Added property for electron configuration superscripts
+  configSuperscript?: string;
+  formula?: string; // Added property for storing complete formula
+  formulaVariables?: string[]; // Added property for formula variables
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -39,6 +42,8 @@ const Button: React.FC<ButtonProps> = ({
   showInfoButton = false,
   small = false,
   configSuperscript,
+  formula,
+  formulaVariables,
 }) => {
   const baseClasses = "flex items-center justify-center font-medium rounded-xl transition-all duration-200 select-none active:animate-button-press";
   
@@ -52,13 +57,14 @@ const Button: React.FC<ButtonProps> = ({
     element: "bg-calculator-button-number text-foreground hover:bg-opacity-80 relative",
     sum: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 font-bold text-3xl",
     superscript: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 relative",
-    "regular-number": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border-2 border-primary/30", // Highlighted border for chemical number
-    "electron-config": "bg-calculator-button-function text-primary hover:bg-opacity-80 relative" // Style for electron configuration
+    "regular-number": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border-2 border-primary/30",
+    "electron-config": "bg-calculator-button-function text-primary hover:bg-opacity-80 relative",
+    "formula": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border border-primary/30 text-xs text-left px-2" // Added style for formula buttons
   };
 
   const handleClick = () => {
     if (!disabled) {
-      onClick(value);
+      onClick(formula || value);
     }
   };
 
@@ -78,7 +84,8 @@ const Button: React.FC<ButtonProps> = ({
         small ? "text-xs" : "",
         disabled && "opacity-50 cursor-not-allowed",
         "h-14 md:h-16 shadow-sm",
-        variant === "sum" && "font-extrabold scale-125", // Extra bold and slightly enlarged for sum variant
+        variant === "sum" && "font-extrabold scale-125", 
+        variant === "formula" && "h-auto py-2 text-left justify-start",
         className
       )}
       onClick={handleClick}
@@ -99,6 +106,11 @@ const Button: React.FC<ButtonProps> = ({
       )}
       {variant === "electron-config" && configSuperscript && (
         <span className="absolute -top-1 -right-1 text-xs">{configSuperscript}</span>
+      )}
+      {formulaVariables && formulaVariables.length > 0 && (
+        <div className="absolute bottom-0 right-1 text-[8px] text-muted-foreground">
+          [{formulaVariables.join(', ')}]
+        </div>
       )}
     </button>
   );
