@@ -67,8 +67,7 @@ const Button: React.FC<ButtonProps> = ({
   const handleClick = () => {
     if (!disabled) {
       if (variant === "formula" && openFormulaDialog) {
-        // Always open the formula dialog immediately when a formula button is clicked,
-        // regardless of whether the formula property is set
+        // Immediately open the formula dialog when clicked, with no additional button presses needed
         openFormulaDialog(formula || value);
       } else {
         onClick(formula || value);

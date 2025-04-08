@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { PhysicsResult, PhysicsOperation } from "./CalculatorUtils";
 import { cn } from "@/lib/utils";
@@ -41,25 +40,26 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
   const [showVariableInputs, setShowVariableInputs] = useState<boolean>(!!formula);
   const [dialogOpen, setDialogOpen] = useState<boolean>(isOpen);
 
-  // Extract variables from formula if available - do this immediately on first render
+  // Extract variables from formula immediately when component mounts or formula changes
   useEffect(() => {
     if (formula) {
       setShowVariableInputs(true);
-      // Initialize variables regardless of initialVariables
+      
+      // Get variables from the formula
       const extractedVars = extractVariables();
-      if (!initialVariables || Object.keys(initialVariables).length === 0) {
-        const newVariables: Record<string, string> = {};
-        extractedVars.forEach(v => {
-          newVariables[v] = '';
-        });
-        setVariables(newVariables);
-      } else {
-        setVariables(initialVariables);
-      }
+      
+      // Always initialize variables when formula changes
+      const newVariables: Record<string, string> = {};
+      extractedVars.forEach(v => {
+        // Keep existing values if available
+        newVariables[v] = initialVariables?.[v] || '';
+      });
+      
+      setVariables(newVariables);
     }
-  }, [formula]);
+  }, [formula, initialVariables]);
 
-  // Sync dialog state with isOpen prop
+  // Keep dialog state in sync with isOpen prop
   useEffect(() => {
     setDialogOpen(isOpen);
   }, [isOpen]);
