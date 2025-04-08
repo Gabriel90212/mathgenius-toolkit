@@ -92,7 +92,7 @@ const Button: React.FC<ButtonProps> = ({
         disabled && "opacity-50 cursor-not-allowed",
         "h-14 md:h-16 shadow-sm",
         variant === "sum" && "font-extrabold scale-125", 
-        variant === "formula" && "h-auto py-2 text-left justify-start",
+        variant === "formula" && "h-auto min-h-[3rem] py-2 text-left justify-start",
         className
       )}
       onClick={handleClick}
