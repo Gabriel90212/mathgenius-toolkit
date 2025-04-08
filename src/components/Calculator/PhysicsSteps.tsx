@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 interface PhysicsStepsProps {
@@ -52,6 +53,8 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
           newVariables[v] = '';
         });
         setVariables(newVariables);
+      } else {
+        setVariables(initialVariables);
       }
     }
   }, [formula, initialVariables]);
@@ -157,6 +160,8 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
                     onChange={(e) => handleVariableChange(variable, e.target.value)}
                     disabled={targetVariable === variable}
                     className={cn("text-sm", targetVariable === variable && "bg-muted")}
+                    type="number"
+                    step="any"
                   />
                 </div>
                 {targetVariable === variable && (
@@ -206,6 +211,15 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
               </div>
             ))}
           </div>
+          
+          <Button 
+            onClick={clearForm}
+            variant="outline"
+            size="sm"
+            className="mt-4"
+          >
+            Clear Formula
+          </Button>
         </>
       )}
     </>
@@ -223,6 +237,9 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
             </DialogDescription>
           </DialogHeader>
           {formulaContent}
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseDialog}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     );
