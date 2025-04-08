@@ -1,4 +1,3 @@
-
 import React from "react";
 import { cn } from "@/lib/utils";
 
@@ -61,13 +60,12 @@ const Button: React.FC<ButtonProps> = ({
     superscript: "bg-calculator-button-operator text-primary-foreground hover:bg-opacity-80 relative",
     "regular-number": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border-2 border-primary/30",
     "electron-config": "bg-calculator-button-function text-primary hover:bg-opacity-80 relative",
-    "formula": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border border-primary/30 text-xs text-left px-2 cursor-pointer hover:bg-primary/10" 
+    "formula": "bg-calculator-button-number text-foreground hover:bg-opacity-80 border border-primary/30 text-sm text-left px-3 cursor-pointer hover:bg-primary/10" 
   };
 
   const handleClick = () => {
     if (!disabled) {
       if (variant === "formula" && openFormulaDialog) {
-        // Immediately open the formula dialog when clicked, with no additional button presses needed
         openFormulaDialog(formula || value);
       } else {
         onClick(formula || value);
@@ -92,7 +90,7 @@ const Button: React.FC<ButtonProps> = ({
         disabled && "opacity-50 cursor-not-allowed",
         "h-14 md:h-16 shadow-sm",
         variant === "sum" && "font-extrabold scale-125", 
-        variant === "formula" && "h-auto min-h-[3rem] py-2 text-left justify-start",
+        variant === "formula" && "h-auto min-h-[4rem] py-3 text-left justify-start",
         className
       )}
       onClick={handleClick}
@@ -102,7 +100,7 @@ const Button: React.FC<ButtonProps> = ({
       {value}
       {showInfoButton && onInfoClick && (
         <span 
-          className="absolute top-0 right-0 w-4 h-4 bg-primary text-white rounded-full flex items-center justify-center text-xs cursor-pointer"
+          className="absolute top-0 right-0 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-xs cursor-pointer"
           onClick={handleInfoClick}
         >
           i
@@ -115,7 +113,7 @@ const Button: React.FC<ButtonProps> = ({
         <span className="absolute -top-1 -right-1 text-xs">{configSuperscript}</span>
       )}
       {formulaVariables && formulaVariables.length > 0 && (
-        <div className="absolute bottom-0 right-1 text-[8px] text-muted-foreground">
+        <div className="absolute bottom-1 right-2 text-[9px] text-muted-foreground">
           [{formulaVariables.join(', ')}]
         </div>
       )}

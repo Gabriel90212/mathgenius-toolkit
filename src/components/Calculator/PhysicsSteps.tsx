@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { PhysicsResult, PhysicsOperation } from "./CalculatorUtils";
 import { cn } from "@/lib/utils";
@@ -138,20 +139,20 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
   const formulaVariables = extractVariables();
 
   const formulaContent = (
-    <div className="mb-4 p-3 bg-muted/30 rounded-md border border-primary/20">
-      <div className="font-medium mb-3 text-center text-primary">{formula}</div>
+    <div className="mb-6 p-4 bg-muted/30 rounded-md border border-primary/20">
+      <div className="font-medium mb-4 text-center text-primary text-lg">{formula}</div>
       
       {showVariableInputs && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {formulaVariables.map(variable => (
-              <div key={variable} className="flex flex-col space-y-1">
-                <div className="flex items-center space-x-2">
+              <div key={variable} className="flex flex-col space-y-2">
+                <div className="flex items-center space-x-3">
                   <Button 
                     variant={targetVariable === variable ? "secondary" : "outline"} 
                     size="sm"
                     onClick={() => handleTargetVariableChange(variable)}
-                    className="w-12 flex-shrink-0"
+                    className="w-14 h-10 flex-shrink-0 text-base"
                   >
                     {variable}
                   </Button>
@@ -160,30 +161,31 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
                     value={variables[variable] || ''}
                     onChange={(e) => handleVariableChange(variable, e.target.value)}
                     disabled={targetVariable === variable}
-                    className={cn("text-sm", targetVariable === variable && "bg-muted")}
+                    className={cn("text-base h-10", targetVariable === variable && "bg-muted")}
                     type="number"
                     step="any"
                   />
                 </div>
                 {targetVariable === variable && (
-                  <p className="text-xs text-muted-foreground pl-14">Solving for this variable</p>
+                  <p className="text-sm text-muted-foreground pl-16">Solving for this variable</p>
                 )}
               </div>
             ))}
           </div>
-          <div className="flex space-x-2">
+          <div className="flex space-x-3">
             <Button 
               onClick={handleCalculateClick} 
-              className="flex-1"
+              className="flex-1 py-2 h-10 text-base"
               variant="default"
-              size="sm"
+              size="default"
             >
               Calculate {targetVariable ? `for ${targetVariable}` : 'Result'}
             </Button>
             <Button
               onClick={clearForm}
               variant="outline"
-              size="sm"
+              size="default"
+              className="h-10 text-base"
             >
               Clear
             </Button>
@@ -196,17 +198,17 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
   const resultsContent = (
     <>
       {result.error ? (
-        <div className="text-red-500 p-2 bg-red-50 rounded-md">{result.error}</div>
+        <div className="text-red-500 p-3 bg-red-50 rounded-md text-base">{result.error}</div>
       ) : (
         <>
-          <div className="font-semibold mb-3 p-2 bg-primary/10 rounded-md flex justify-between">
+          <div className="font-semibold mb-4 p-3 bg-primary/10 rounded-md flex justify-between text-base">
             <span>Result:</span> <span className="font-mono">{result.result}</span>
           </div>
-          <div className="space-y-3 mt-4">
+          <div className="space-y-4 mt-6">
             {result.steps && result.steps.map((step, index) => (
-              <div key={index} className="border-b border-border pb-3 last:border-0 last:pb-0">
-                <div className="font-medium">{step.description}</div>
-                <div className="font-mono bg-muted/50 p-2 rounded mt-1 overflow-x-auto">
+              <div key={index} className="border-b border-border pb-4 last:border-0 last:pb-0">
+                <div className="font-medium text-base">{step.description}</div>
+                <div className="font-mono bg-muted/50 p-3 rounded mt-2 overflow-x-auto text-base">
                   {step.expression}
                 </div>
               </div>
@@ -216,8 +218,8 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
           <Button 
             onClick={clearForm}
             variant="outline"
-            size="sm"
-            className="mt-4"
+            size="default"
+            className="mt-5 text-base"
           >
             Clear Formula
           </Button>
@@ -230,16 +232,16 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
   if (formula && isOpen) {
     return (
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[80vh] overflow-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Formula Calculator</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl">Formula Calculator</DialogTitle>
+            <DialogDescription className="text-base">
               Enter values and select which variable to solve for
             </DialogDescription>
           </DialogHeader>
           {formulaContent}
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseDialog}>Close</Button>
+            <Button variant="outline" onClick={handleCloseDialog} className="text-base">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -248,11 +250,11 @@ const PhysicsSteps: React.FC<PhysicsStepsProps> = ({
 
   // For regular display
   return (
-    <Card className={cn("mt-4 overflow-auto max-h-[500px]", className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-medium">{getTitle()}</CardTitle>
+    <Card className={cn("mt-5 overflow-auto max-h-[550px]", className)}>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-medium">{getTitle()}</CardTitle>
       </CardHeader>
-      <CardContent className="text-sm">
+      <CardContent className="text-base">
         {formula && formulaContent}
         {resultsContent}
       </CardContent>
